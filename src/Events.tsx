@@ -21,12 +21,12 @@ export default function Events() {
   const [snapshot] = useCollection(q);
 
   const events: EventLog[] | undefined = snapshot?.docs.map((doc) => {
-    const data = doc.data();
+    const data = doc.data() as PrimitiveEventLog;
+    const createdAt = (data.createdAt as any).seconds;
     return {
       id: doc.id,
-      createdAt: data.createdAt.seconds as number,
-      attent_dosage: data.attent_dosage,
-      event_type: data.event_type,
+      ...data,
+      createdAt,
     };
   });
 
@@ -48,10 +48,13 @@ export interface EventProps {
 export function Event({ event }: EventProps) {
   return <pre>{JSON.stringify(event)}</pre>;
 }
-export interface EventLog {
-  id: string;
+interface PrimitiveEventLog {
   //in seconds. (epoch obv)
   createdAt: number;
+  amount: number;
+  amount_type: string;
   event_type: string;
-  attent_dosage?: string | number;
+}
+export interface EventLog extends PrimitiveEventLog {
+  id: string;
 }

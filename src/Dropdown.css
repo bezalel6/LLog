@@ -1,0 +1,40 @@
+.dropdown {
+    position: relative;
+    max-height: var(--single_element_height);
+    width: fit-content;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    user-select: none;
+    cursor: pointer;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid white;
+}
+.dropdown_option {
+    display: none;
+    height: var(--single_element_height);
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+.dropdown_option[data-active="true"] {
+    display: block;
+}
+
+.dropdown.active {
+    max-height: 1000px; /* Assuming it will not exceed this height */
+}
+.dropdown.active .dropdown_option {
+    display: block;
+}
+
+.dropdown.active .dropdown_option:hover {
+    border: 1px solid #ddd; /* You can replace #ddd with the color you want for hover border */
+    transition: border 0.3s ease-in-out;
+}
+
+.dropdown_option:active {
+    border: 1px solid #333; /* You can replace #333 with the color you want for active border */
+    transition: border 0.3s ease-in-out;
+}

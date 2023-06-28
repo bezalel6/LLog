@@ -5,6 +5,7 @@ import "firebase/compat/auth";
 import "firebase/compat/firestore";
 import { FirebaseContext, UserContext } from "./contexts";
 import Events from "./Events";
+import EventCreator from "./EventCreator";
 
 const app = firebase.initializeApp({
   apiKey: "AIzaSyBv8K7EfFbjG0Bb_Ji7_bQirZ1LXaK7ylw",
@@ -52,6 +53,7 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>
         <Events></Events>
+        <EventCreator></EventCreator>
       </UserContext.Provider>
     </FirebaseContext.Provider>
   );
