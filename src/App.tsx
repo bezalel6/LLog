@@ -1,10 +1,10 @@
 import "./App.css";
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/firestore";
 import { FirebaseContext, UserContext } from "./contexts";
-import Events from "./Events";
+import Events, { EventLog } from "./Events";
 import EventCreator from "./EventCreator";
 
 const app = firebase.initializeApp({
@@ -49,11 +49,13 @@ const SignIn: FC = () => {
 };
 
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
+  const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
+
   return (
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>
-        <Events></Events>
-        <EventCreator></EventCreator>
+        <Events currentLogs={eventLogs} setEventLogs={setEventLogs}></Events>
+        <EventCreator eventLogs={eventLogs}></EventCreator>
       </UserContext.Provider>
     </FirebaseContext.Provider>
   );

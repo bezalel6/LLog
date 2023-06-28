@@ -1,109 +1,59 @@
 import React, { useRef } from "react";
-import "./Dropdown.css";
-export default function EventCreator() {
+import Dropdown from "./components/Dropdown";
+import { EventLog } from "./Events";
+import { formatLabelStr } from "./utils/utils";
+
+export interface EventCreatorProps {
+  eventLogs: EventLog[];
+}
+const NonGuiEventKeys: Set<keyof EventLog> = new Set(["createdAt", "id"]);
+export default function EventCreator({ eventLogs }: EventCreatorProps) {
+  const defaultOptionValues: Array<Set<string>> = [];
+  const optionLabels: Map<number, string> = new Map();
+  eventLogs.forEach((eventLog) => {
+    Object.keys(eventLog)
+      .filter((k) => !NonGuiEventKeys.has(k as keyof EventLog))
+      .forEach((key, i) => {
+        if (!defaultOptionValues[i]) defaultOptionValues[i] = new Set();
+        optionLabels.set(i, key);
+        defaultOptionValues[i].add(eventLog[key] + "");
+      });
+  });
+
   const onSubmit = (e: any) => {
     e.preventDefault();
   };
-  const onOptionSelected = (selected: string, index: number) => {
-    alert(selected);
+
+  const onOptionSelected = (selected: string, selectedIndex: number) => {
+    // alert(selected);
+    //if selected the first element, autofill the next ones to the first event found with that value
+    if (selectedIndex === 0) {
+      // defaultOptionValues[0].
+    }
   };
 
+  for (let i = 0; i < optionLabels.size; i++) {
+    console.log(optionLabels.get(i), defaultOptionValues[i]);
+  }
+  // console.log(optionsForOptions);
   return (
     <>
       <form onSubmit={onSubmit}>
-        <Dropdown
-          onSelected={onOptionSelected}
-          options={["one", "two", "three"]}
-        ></Dropdown>
-        <button type="submit"></button>
+        <div className="container flex-row">
+          {defaultOptionValues.map((options, index) => {
+            return (
+              <Dropdown
+                label={formatLabelStr(optionLabels.get(index))}
+                key={index}
+                onSelected={onOptionSelected}
+                options={[...options]}
+              ></Dropdown>
+            );
+          })}
+        </div>
+        <br />
+        <button type="submit">Send</button>
       </form>
     </>
   );
-}
-
-export interface DropdownProps<T = string> {
-  options: T[];
-  onSelected: (selected: T, index: number) => void;
-}
-import { Component } from "react";
-
-type DropdownState = {
-  isActive: boolean;
-};
-
-class Dropdown extends Component<DropdownProps, DropdownState> {
-  constructor(props: DropdownProps) {
-    super(props);
-    this.state = {
-      isActive: false,
-    };
-  }
-  getOptions = () => {
-    return document.querySelectorAll<HTMLDivElement>(".dropdown_option");
-  };
-  public getSelected() {
-    const opts = this.getOptions();
-    for (let i = 0; i < opts.length; i++) {
-      if (opts[i].dataset.active) {
-        return this.makeRet(i);
-      }
-    }
-    throw new Error("how tf");
-  }
-  makeRet(i: number) {
-    const opts = this.getOptions();
-    return { option: this.props.options[i], index: i };
-  }
-  componentDidMount() {
-    const height = document.querySelector(".dropdown_option")?.clientHeight;
-    if (height) {
-      console.log("dropdown element height", height);
-      document.documentElement.style.setProperty(
-        "--single_element_height",
-        `${height}px`
-      );
-    }
-
-    const opts = this.getOptions();
-
-    for (let i = 0; i < opts.length; i++) {
-      const option = opts[i];
-      option.onclick = () => {
-        this.getOptions().forEach((o, inner) => {
-          if (inner != i) o.dataset.active = "false";
-        });
-        if (option.dataset.active !== "true") {
-          option.dataset.active = "true";
-          this.props.onSelected(this.makeRet(i).option, this.makeRet(i).index);
-        }
-      };
-    }
-  }
-
-  onClick = () => {
-    this.setState((prevState) => ({
-      isActive: !prevState.isActive,
-    }));
-  };
-
-  render() {
-    const { isActive } = this.state;
-    const { options } = this.props;
-    const activeClass = isActive ? "active" : "";
-
-    return (
-      <div onClick={this.onClick} className={`dropdown ${activeClass}`}>
-        {options.map((option, i) => (
-          <div
-            className="dropdown_option"
-            data-active={i == 0 ? "true" : ""}
-            data-index={i}
-            key={i}
-          >
-            {option}
-          </div>
-        ))}
-      </div>
-    );
-  }
 }
