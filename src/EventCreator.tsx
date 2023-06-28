@@ -10,26 +10,28 @@ const NonGuiEventKeys: Set<keyof EventLog> = new Set(["createdAt", "id"]);
 export default function EventCreator({ eventLogs }: EventCreatorProps) {
   const defaultOptionValues: Array<Set<string>> = [];
   const optionLabels: Map<number, string> = new Map();
+
+  const filteredLogKeys = eventLogs.length
+    ? Object.keys(eventLogs[0]).filter(
+        (k) => !NonGuiEventKeys.has(k as keyof EventLog)
+      )
+    : [];
   eventLogs.forEach((eventLog) => {
-    Object.keys(eventLog)
-      .filter((k) => !NonGuiEventKeys.has(k as keyof EventLog))
-      .forEach((key, i) => {
-        if (!defaultOptionValues[i]) defaultOptionValues[i] = new Set();
-        optionLabels.set(i, key);
-        defaultOptionValues[i].add(eventLog[key] + "");
-      });
+    filteredLogKeys.forEach((key, i) => {
+      if (!defaultOptionValues[i]) defaultOptionValues[i] = new Set();
+      optionLabels.set(i, key);
+      defaultOptionValues[i].add(eventLog[key] + "");
+    });
   });
 
   const onSubmit = (e: any) => {
     e.preventDefault();
   };
 
-  const onOptionSelected = (selected: string, selectedIndex: number) => {
-    // alert(selected);
-    //if selected the first element, autofill the next ones to the first event found with that value
-    if (selectedIndex === 0) {
-      // defaultOptionValues[0].
-    }
+  const makeOnSelectionFunc = (dropdownIndex: number) => {
+    return (selected, index) => {
+      //
+    };
   };
 
   for (let i = 0; i < optionLabels.size; i++) {
@@ -45,7 +47,7 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
               <Dropdown
                 label={formatLabelStr(optionLabels.get(index))}
                 key={index}
-                onSelected={onOptionSelected}
+                onSelected={makeOnSelectionFunc(index)}
                 options={[...options]}
               ></Dropdown>
             );

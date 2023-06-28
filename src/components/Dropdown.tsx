@@ -12,6 +12,10 @@ type DropdownState = {
 };
 
 export default class Dropdown extends Component<DropdownProps, DropdownState> {
+  static dropdownInstances: Dropdown[] = [];
+  public static getDropdown(index: number) {
+    return this.dropdownInstances[index];
+  }
   private dropdownRef = createRef<HTMLDivElement>();
 
   constructor(props: DropdownProps) {
@@ -20,6 +24,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
     this.state = {
       isActive: false,
     };
+    Dropdown.dropdownInstances.push(this);
   }
 
   getOptions = () => {
@@ -63,13 +68,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
     for (let i = 0; i < opts.length; i++) {
       const option = opts[i];
       option.onclick = () => {
-        this.getOptions().forEach((o, inner) => {
-          if (inner != i) o.dataset.active = "false";
-        });
-        if (option.dataset.active !== "true") {
-          option.dataset.active = "true";
-          this.props.onSelected(this.makeRet(i).option, this.makeRet(i).index);
-        }
+        this.setSelected(i);
       };
     }
   }
@@ -79,7 +78,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
     for (let i = 0; i < opts.length; i++) {
       const option = opts[i];
       if (i != index) option.dataset.active = "false";
-      else if (option.dataset.active !== "true") {
+      /*if (option.dataset.active !== "true")*/ else {
         option.dataset.active = "true";
         if (triggerSelectionCallback)
           this.props.onSelected(this.makeRet(i).option, this.makeRet(i).index);

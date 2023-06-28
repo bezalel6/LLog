@@ -1,11 +1,14 @@
 export function sortKeys<T>(obj: T) {
-  return Object.keys(obj)
-    .sort()
-    .reduce((objEntries, key) => {
-      objEntries[key] = obj[key];
+  return (
+    Object.keys(obj)
+      .sort()
+      // .reverse()
+      .reduce((objEntries, key) => {
+        objEntries[key] = obj[key];
 
-      return objEntries as T;
-    }, {}) as T;
+        return objEntries as T;
+      }, {}) as T
+  );
 }
 
 export function formatLabelStr(str: string) {
