@@ -10,7 +10,12 @@ body {
   justify-content: center;
   user-select: none;
 }
-
+.sign-out > * {
+  display: inline-block;
+}
+.sign-out > a {
+  margin-left: 5px;
+}
 .container {
   display: flex;
   align-items: center;

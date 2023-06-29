@@ -50,12 +50,26 @@ const SignIn: FC = () => {
   );
 };
 
+const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
+  const signOut = () => {
+    firebase.auth().signOut().then(location.reload);
+  };
+
+  return (
+    <div className="sign-out">
+      <p>Hello {user.displayName}</p>
+      <a onClick={signOut}>Sign out</a>
+    </div>
+  );
+};
+
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
 
   return (
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>
+        <SignOut user={user} />
         <Events currentLogs={eventLogs} setEventLogs={setEventLogs}></Events>
         <EventCreator eventLogs={eventLogs}></EventCreator>
       </UserContext.Provider>
