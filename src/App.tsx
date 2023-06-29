@@ -4,7 +4,8 @@ import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/firestore";
 import { FirebaseContext, UserContext } from "./contexts";
-import Events, { EventLog } from "./Events";
+import Events from "./Events";
+import { EventLog } from "./components/Event";
 import EventCreator from "./EventCreator";
 
 const app = firebase.initializeApp({
