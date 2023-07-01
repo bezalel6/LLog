@@ -14,10 +14,12 @@ import {
   BarController,
   BarElement,
   LineController,
+  ChartOptions,
 } from "chart.js";
 import { Chart, Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
 import Selection from "../components/SelectionButtons";
+import moment from "moment";
 ChartJS.register(
   LinearScale,
   CategoryScale,
@@ -31,38 +33,46 @@ ChartJS.register(
   BarController,
   Colors
 );
-interface LineProps {
-  events: EventLog[];
+export interface TimeRange {
+  start: Date;
+  end: Date;
 }
-const options = {
-  scales: {
-    x: {
-      type: "time" as const,
-      time: {
-        unit: "hour" as const,
-        displayFormats: {
-          hour: "ha" as const,
+interface ConfigData {
+  data: { datasets: any };
+  timeRange: TimeRange;
+}
+const options = (conf: ConfigData): ChartOptions => {
+  return {
+    scales: {
+      x: {
+        type: "time" as const,
+        time: {
+          unit: "hour" as const,
+
+          displayFormats: {
+            hour: "ha" as const,
+          },
+        },
+        min: conf.timeRange.start.getTime(),
+        max: conf.timeRange.end.getTime(),
+        // ticks: {
+        //   stepSize: 10,
+        // },
+        title: {
+          display: true,
+          text: "Time" as const,
         },
       },
-      min: new Date().setHours(0, 0, 0, 0),
-      max: new Date().setHours(23, 59, 59, 999),
-      ticks: {
-        stepSize: 10,
-      },
-      title: {
-        display: true,
-        text: "Time" as const,
+      y: {
+        title: {
+          display: true,
+          text: "Value" as const,
+        },
       },
     },
-    y: {
-      title: {
-        display: true,
-        text: "Value" as const,
-      },
-    },
-  },
+  };
 };
-export default function LineChart({ events }: LineProps) {
+export default function LineChart({ events }: { events: EventLog[] }) {
   const [timespan, setTimeSpan] = useState(TimeSpan.Day);
 
   const data = createData(events, timespan);
@@ -71,7 +81,7 @@ export default function LineChart({ events }: LineProps) {
 
   return (
     <div>
-      <Chart type="line" options={options} data={data}></Chart>
+      <Chart type="line" options={options(data)} data={data.data}></Chart>
       <Selection<TimeSpan>
         currentValue={timespan}
         enumV={TimeSpan}
@@ -84,36 +94,61 @@ export default function LineChart({ events }: LineProps) {
 function getEventTypes(events: EventLog[]) {
   return [...new Set(events.map((e) => e.event_type))];
 }
-
-interface Dataset {
-  label: string;
-  data: any;
+function groupEventsByTime(events: EventLog[], maxTimeDiffMs: number) {
+  const grouped: EventLog[][] = [];
+  for (let i = 0; i < events.length; i++) {
+    const element = events[i];
+    const arr = [element];
+    for (let j = i + 1; j < events.length; j++) {
+      const other = events[i];
+      if (
+        Math.abs(element.timestamp.getTime() - other.timestamp.getTime()) <=
+        maxTimeDiffMs
+      ) {
+        arr.push(other);
+      }
+    }
+    grouped.push(arr);
+  }
+  return grouped;
 }
-function createData(events: EventLog[], timespan: TimeSpan) {
-  // Group events by date
 
-  const labels = new Set<string>();
+function createData(events: EventLog[], timespan: TimeSpan): ConfigData {
+  // Group events by date
 
   const eventTypes = getEventTypes(events);
 
   const data = new Map<string, any>();
+  const timeRange: TimeRange = {
+    start: new Date(),
+    end: new Date(),
+  };
+
   if (timespan === TimeSpan.Day) {
-    const dayDate = new Date();
-    events
-      .filter((e) => {
-        const ret = e.timestamp?.toDateString() === dayDate.toDateString();
-
-        return ret;
-      })
-      .forEach((e) => {
-        if (!data.has(e.event_type)) data.set(e.event_type, []);
-
-        data.get(e.event_type).push({ y: e.normalized, x: e.timestamp });
-      });
+    // timeRange.end.setHours(23, 59, 59, 999);
+    timeRange.start = moment(new Date()).subtract(1, "day").toDate();
+    timeRange.end = moment(new Date()).add(0.5, "day").toDate();
+  } else if (timespan === TimeSpan.Week) {
+    timeRange.start = moment(new Date()).subtract(1, "weeks").toDate();
+  } else if (timespan === TimeSpan.Month) {
+    timeRange.start = moment(new Date()).subtract(1, "months").toDate();
   }
 
+  const value: { [eventType: string]: number } = {};
+  eventTypes.forEach((t) => (value[t] = 0));
+  events
+    .filter((e) =>
+      moment(e.timestamp).isBetween(timeRange.start, timeRange.end)
+    )
+    .forEach((e) => {
+      if (!data.has(e.event_type)) data.set(e.event_type, []);
+
+      data
+        .get(e.event_type)
+        .push({ y: (value[e.event_type] += e.normalized), x: e.timestamp });
+    });
   const datasets = eventTypes.map((t, i) => {
-    const dic: Dataset & any = {
+    const dic: any = {
       type: "line" as const,
       label: t,
       data: data.get(t),
@@ -123,80 +158,9 @@ function createData(events: EventLog[], timespan: TimeSpan) {
     };
     return dic;
   });
-  console.log(datasets);
+  // console.log(datasets);
 
-  return { labels: [...labels], datasets };
-  // const datasets = [...eventTypes].map((t, i) => {
-  //   const dic: Dataset = {
-  //     label: i == 0 ? t + "" : t + "" + (i + 1),
-  //   };
-  //   return dic;
-  // });
-  // const data = {
-  //   labels: [...labels],
-  //   datasets: [
-  //     {
-  //       label: "Dataset 1",
-  //       data: labels.map(() =>
-  //         faker.datatype.number({ min: -1000, max: 1000 })
-  //       ),
-  //       borderColor: "rgb(255, 99, 132)",
-  //       backgroundColor: "rgba(255, 99, 132, 0.5)",
-  //       yAxisID: "y",
-  //     },
-  //     {
-  //       label: "Dataset 2",
-  //       data: labels.map(() =>
-  //         faker.datatype.number({ min: -1000, max: 1000 })
-  //       ),
-  //       borderColor: "rgb(53, 162, 235)",
-  //       backgroundColor: "rgba(53, 162, 235, 0.5)",
-  //       yAxisID: "y1",
-  //     },
-  //   ],
-  // };
-
-  // const options = {
-  //   responsive: true,
-  //   interaction: {
-  //     mode: "index" as const,
-  //     intersect: false,
-  //   },
-  //   stacked: false,
-  //   plugins: {
-  //     title: {
-  //       display: true,
-  //       text: "Chart.js Line Chart - Multi Axis",
-  //     },
-  //   },
-  //   scales: {
-  //     y: {
-  //       type: "linear" as const,
-  //       display: true,
-  //       position: "left" as const,
-  //     },
-  //     y1: {
-  //       type: "linear" as const,
-  //       display: true,
-  //       position: "right" as const,
-  //       grid: {
-  //         drawOnChartArea: false,
-  //       },
-  //     },
-  //   },
-  // };
-
-  // // Create labels and data arrays
-  // for (const date in eventsByDate) {
-  //   labels.push(date);
-  //   const totalAmount = eventsByDate[date].reduce(
-  //     (sum, event) => sum + event.amount,
-  //     0
-  //   );
-  //   data.push(totalAmount);
-  // }
-
-  // return { labels, data };
+  return { timeRange, data: { datasets } };
 }
 
 enum TimeSpan {

@@ -29,5 +29,3 @@ export class EventLog implements PrimitiveEventLog {
     return reg.test(this.event_type) ? this.amount / 15 : this.amount;
   }
 }
-
-class Normalizer {}
