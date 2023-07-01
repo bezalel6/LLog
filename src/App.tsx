@@ -7,7 +7,7 @@ import "firebase/compat/messaging";
 import "firebase/compat/firestore";
 import { FirebaseContext, UserContext } from "./contexts";
 import Events from "./Events";
-import { EventLog } from "./components/Event";
+import { EventLog } from "./Event";
 import EventCreator from "./EventCreator";
 
 const app = firebase.initializeApp({
@@ -23,7 +23,9 @@ const app = firebase.initializeApp({
 const auth = firebase.auth();
 
 const App: FC = () => {
-  const [user, setUser] = React.useState<firebase.User | null>(null);
+  const [user, setUser] = React.useState<firebase.User | null | "initializing">(
+    "initializing"
+  );
 
   React.useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -33,7 +35,15 @@ const App: FC = () => {
   }, []);
 
   return (
-    <div className="App">{user ? <LoggedIn user={user} /> : <SignIn />}</div>
+    <div className="App">
+      {user === "initializing" ? (
+        "Initializing..."
+      ) : user ? (
+        <LoggedIn user={user} />
+      ) : (
+        <SignIn />
+      )}
+    </div>
   );
 };
 

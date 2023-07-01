@@ -1,6 +1,6 @@
 import React, { useContext, useRef } from "react";
 import Dropdown from "./components/Dropdown";
-import { EventLog, PrimitiveEventLog } from "./components/Event";
+import { EventLog, PrimitiveEventLog } from "./Event";
 import { formatLabelStr, isNumber } from "./utils/utils";
 import {
   getFirestore,
@@ -48,13 +48,20 @@ function validateDoc(doc: any) {
     )
   );
 }
-
+export type Listener = () => void;
+export class EventEmittor {
+  listeners = new Array<Listener>();
+  public addListener(l: Listener) {
+    this.listeners.push(l);
+  }
+  public emit() {
+    this.listeners.forEach((l) => l());
+  }
+}
 export default function EventCreator({ eventLogs }: EventCreatorProps) {
   const convertedEvents = eventLogs.map(convertEventLogToGUI);
   // console.log(convertedEvents);
-  const resetor = {
-    onreset: null,
-  };
+  const eventEmittor = useRef(new EventEmittor()).current;
 
   const formData = useRef<GUIEventLog>({
     amount: -1,
@@ -64,14 +71,22 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
 
   const defaultOptionValues: Array<Set<string>> = [];
   const optionLabels: Map<number, string> = new Map();
-
-  convertedEvents.forEach((convertedEvents) => {
-    Object.keys(convertedEvents).forEach((key, i) => {
-      if (!defaultOptionValues[i]) defaultOptionValues[i] = new Set();
-      optionLabels.set(i, key);
-      defaultOptionValues[i].add(convertedEvents[key] + "");
+  const addOption = (event: null | GUIEventLog, key: string, i: number) => {
+    if (!defaultOptionValues[i]) defaultOptionValues[i] = new Set();
+    optionLabels.set(i, key);
+    if (event) defaultOptionValues[i].add(event[key] + "");
+  };
+  convertedEvents.forEach((convertedEvent) => {
+    Object.keys(convertedEvent).forEach((key, i) => {
+      addOption(convertedEvent, key, i);
     });
   });
+  if (!convertedEvents.length) {
+    const k: GUIEventLog = { amount: 0, amount_type: "", event_type: "" };
+    Object.keys(k).forEach((key, i) => {
+      addOption(null, key, i);
+    });
+  }
 
   const firebase = useContext(FirebaseContext)!;
   const user = useContext(UserContext)!;
@@ -85,14 +100,16 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
     const eventsRef = collection(db, "events");
     const doc = { ...convertGUIEventLogToSend(formData), uid: user.uid };
     if (!validateDoc(doc)) {
-      console.error("update wasnt validated");
+      console.error("values not valid");
+      return;
     }
     await addDoc(eventsRef, doc)
       .then(() => {
         console.log("succesfully added " + formData.event_type);
-        if (resetor.onreset) resetor.onreset();
+        eventEmittor.emit();
       })
       .catch((e) => {
+        console.error("error" + e + "occured using:" + formData);
         alert("error writing to the db: " + e);
       });
   };
@@ -106,13 +123,13 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
       console.log("key", key, "val", selected);
       if (isNumber(formData[key])) formData[key] = Number(selected);
       else formData[key] = selected;
-      console.log("set val", formData[key]);
+      // console.log("set val", formData[key]);
     };
   };
 
-  for (let i = 0; i < optionLabels.size; i++) {
-    console.log(optionLabels.get(i), defaultOptionValues[i]);
-  }
+  // for (let i = 0; i < optionLabels.size; i++) {
+  //   console.log(optionLabels.get(i), defaultOptionValues[i]);
+  // }
   // console.log(optionsForOptions);
   return (
     <>
@@ -121,7 +138,7 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
           {defaultOptionValues.map((options, index) => {
             return (
               <Dropdown
-                resetor={resetor}
+                eventEmittor={eventEmittor}
                 customInput={true}
                 label={formatLabelStr(optionLabels.get(index))}
                 key={index}

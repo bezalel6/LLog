@@ -1,12 +1,13 @@
 import { Component, createRef } from "react";
 import "./Dropdown.css";
+import { EventEmittor } from "../EventCreator";
 
 export interface DropdownProps<T = string> {
   label?: string;
   customInput: boolean;
   options: T[];
   onSelected: (selected: T, index: number) => void;
-  resetor: { onreset: () => void };
+  eventEmittor: EventEmittor;
 }
 
 type DropdownState = {
@@ -25,7 +26,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
       isActive: false,
       inputStr: "",
     };
-    props.resetor.onreset = this.onInputReset;
+    props.eventEmittor.addListener(this.onInputReset);
   }
 
   getOptions = () => {
@@ -46,7 +47,8 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
         return this.makeRet(i);
       }
     }
-    throw new Error("No active option found");
+    // throw new Error("No active option found");
+    return { option: this.state.inputStr, index: -1 };
   }
 
   makeRet(i: number) {
@@ -96,9 +98,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
           };
         },
         () => {
-          this.setSelected(
-            newStr.trim().length === 0 ? this.getSelected().index : -1
-          );
+          this.setSelected(newStr.trim().length === 0 ? 0 : -1);
         }
       );
     };
@@ -136,6 +136,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
     }));
   };
   onInputReset = () => {
+    if (!this.inputRef || !this.inputRef.current) return;
     this.inputRef.current.value = "";
     this.inputRef.current.onkeyup(null);
   };

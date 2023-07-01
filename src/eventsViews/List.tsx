@@ -1,18 +1,28 @@
-import { FieldValue } from "firebase/firestore";
-import "./Event.css";
+import React, { useRef } from "react";
+import { EventLog } from "../Event";
+import TimeSince from "../components/TimeSince";
 import { formatLabelStr } from "../utils/utils";
+import "./List.css";
 
-import moment from "moment";
-import TimeSince from "./TimeSince";
+export default function List({ events }: { events: EventLog[] }) {
+  const bottomRef = useRef<HTMLDivElement>();
+  if (bottomRef.current)
+    bottomRef.current.scrollIntoView({ behavior: "smooth" });
+  return (
+    <div className="events-list">
+      {events.map((e, i) => (
+        <Event key={i} event={e}></Event>
+      ))}
+      <div ref={bottomRef}></div>
+    </div>
+  );
+}
 export interface EventProps {
   event: EventLog;
 }
 
 export function Event({ event }: EventProps) {
-  let timestamp = new Date();
-
-  timestamp.setTime((event.createdAt as number) * 1000);
-  if (timestamp.getTime() > new Date().getTime()) timestamp = new Date();
+  const timestamp = event.timestamp;
 
   // timestamp
   return (
@@ -28,14 +38,4 @@ export function Event({ event }: EventProps) {
       </div>
     </div>
   );
-}
-export interface PrimitiveEventLog {
-  //in seconds. (epoch obv)
-  createdAt: number | FieldValue;
-  amount: number;
-  units: string;
-  event_type: string;
-}
-export interface EventLog extends PrimitiveEventLog {
-  id: string;
 }
