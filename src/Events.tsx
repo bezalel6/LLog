@@ -1,5 +1,6 @@
+/* eslint-disable no-debugger */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FirebaseContext, UserContext } from "./contexts";
 import { useCollection } from "react-firebase-hooks/firestore";
 import Selection from "./components/SelectionButtons";
@@ -44,10 +45,14 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
     e.event_type = data.event_type;
     e.units = data.units;
     e.id = id;
+
     return e;
   });
+  // const events = (_events ? _events.filter((o) => !!o) : []).map((e) => {
+  //   return sortKeys(e);
+  // });
   const events = (_events ? _events.filter((o) => !!o) : []).map((e) => {
-    return sortKeys(e);
+    return e;
   });
   // console.log(events);
 
@@ -56,23 +61,13 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
     // fetch or calculate new logs
 
     if (JSON.stringify(currentLogs) !== JSON.stringify(events)) {
+      console.log("got new events", events);
+
       setEventLogs(events);
     }
   }, [events, currentLogs, setEventLogs]);
 
   const [currentViewStyle, setCurrentViewStyle] = useState(EventViewStyle.List);
-
-  function getView() {
-    switch (currentViewStyle) {
-      case EventViewStyle.LineChart:
-        return <LineChart events={events}></LineChart>;
-      case EventViewStyle.List:
-        return <List events={events}></List>;
-
-      default:
-        return <>{EventViewStyle[currentViewStyle]} isnt implemented yet</>;
-    }
-  }
   return (
     <div className="events">
       {/* <ViewStyleSelector
@@ -85,7 +80,12 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
         setValue={setCurrentViewStyle}
       ></Selection>
 
-      {getView()}
+      {currentViewStyle === EventViewStyle.LineChart && (
+        <LineChart events={events}></LineChart>
+      )}
+      {currentViewStyle === EventViewStyle.List && (
+        <List events={events}></List>
+      )}
     </div>
   );
 }

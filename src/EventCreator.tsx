@@ -71,6 +71,7 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
 
   const defaultOptionValues: Array<Set<string>> = [];
   const optionLabels: Map<number, string> = new Map();
+
   const addOption = (event: null | GUIEventLog, key: string, i: number) => {
     if (!defaultOptionValues[i]) defaultOptionValues[i] = new Set();
     optionLabels.set(i, key);
@@ -82,10 +83,14 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
     });
   });
   if (!convertedEvents.length) {
+    // console.log("didnt get any events. generating dummy...");
+
     const k: GUIEventLog = { amount: 0, amount_type: "", event_type: "" };
     Object.keys(k).forEach((key, i) => {
       addOption(null, key, i);
     });
+  } else {
+    // console.log("got events.");
   }
 
   const firebase = useContext(FirebaseContext)!;
@@ -116,11 +121,12 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
 
   const makeOnSelectionFunc = (dropdownIndex: number) => {
     return (selected: string, _: number) => {
+      // debugger;
       function k(i: number) {
         return Object.keys(formData)[i];
       }
       const key = k(dropdownIndex);
-      console.log("key", key, "val", selected);
+      // console.log("key", key, "val", selected);
       if (isNumber(formData[key])) formData[key] = Number(selected);
       else formData[key] = selected;
       // console.log("set val", formData[key]);

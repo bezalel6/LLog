@@ -25,6 +25,7 @@ export default function Selection<T>({
         .filter((key) => isNaN(Number(key)))
         .map((key, i) => {
           const t = enumV[key];
+
           const isSelected = t === currentValue;
           return (
             <button

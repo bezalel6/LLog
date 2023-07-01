@@ -14,7 +14,7 @@ type DropdownState = {
   isActive: boolean;
   inputStr: string;
 };
-
+const debugging = false;
 export default class Dropdown extends Component<DropdownProps, DropdownState> {
   private dropdownRef = createRef<HTMLDivElement>();
   private inputRef = createRef<HTMLInputElement>();
@@ -56,17 +56,19 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
       option: i === -1 ? this.state.inputStr : this.props.options[i],
       index: i,
     };
-
-    console.log(`making ret for ${i} made `, ret);
+    if (debugging) console.log(`making ret for ${i} made `, ret);
 
     return ret;
   }
-
-  componentDidMount() {
+  didInit = false;
+  componentDidUpdate(
+    prevProps: Readonly<DropdownProps<string>>,
+    prevState: Readonly<DropdownState>,
+    snapshot?: any
+  ): void {
     const height =
       this.dropdownRef.current?.querySelector(".dropdown_option")?.clientHeight;
     if (height) {
-      console.log("dropdown element height", height);
       document.documentElement.style.setProperty(
         "--single_element_height",
         `${height}px`
@@ -74,6 +76,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
     }
 
     const opts = this.getOptions();
+    if (debugging) console.log("got options:", opts);
 
     for (let i = 0; i < opts.length; i++) {
       const option = opts[i];
@@ -81,11 +84,12 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
         this.setSelected(i);
       };
     }
-    console.log(
-      "---calling onSelected when initializing with default values---"
-    );
-    this.setSelected(0, true);
-
+    if (!this.didInit && opts.length) {
+      this.didInit = true;
+      this.setSelected(0, true);
+    }
+  }
+  componentDidMount() {
     this.inputRef.current.onkeyup = (e) => {
       const newStr = this.inputRef.current.value;
       if (newStr === this.state.inputStr) return;
@@ -106,7 +110,8 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
   public setSelected(index: number, triggerSelectionCallback = true) {
     const opts = this.getOptions();
     const trigger = (i: number) => {
-      this.props.onSelected(this.makeRet(i).option, this.makeRet(i).index);
+      const { option, index } = this.makeRet(i);
+      this.props.onSelected(option, index);
     };
     for (let i = 0; i < opts.length; i++) {
       const option = opts[i];
@@ -130,10 +135,10 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
     }));
   };
   mouseLeave = () => {
-    this.setState((prevState) => ({
-      isActive: false,
-      inputStr: prevState.inputStr,
-    }));
+    // this.setState((prevState) => ({
+    //   isActive: false,
+    //   inputStr: prevState.inputStr,
+    // }));
   };
   onInputReset = () => {
     if (!this.inputRef || !this.inputRef.current) return;
