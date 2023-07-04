@@ -51,7 +51,9 @@ export const getAggregatedDataBody = (
   if (bucketByTime)
     return {
       ...requestBody,
-      durationMillis: 86400000,
+      bucketByTime: {
+        durationMillis: 86400000,
+      },
     };
   return requestBody;
 };
