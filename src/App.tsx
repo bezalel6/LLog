@@ -129,9 +129,6 @@ async function rertrieveSleepInfo(accessToken) {
   await getWeeklySleepData(startTime, endTime, requestParameters)
     .then((data) => {
       console.log("SLEEP", data);
-      if (data.find((d) => !!d.Sleep)) {
-        alert("HOLY FUCKKKKK");
-      }
     })
     .catch((err) => {
       console.log(err);

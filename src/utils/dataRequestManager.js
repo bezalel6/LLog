@@ -144,23 +144,33 @@ export const getSleepData = async (sleepSessions, headers) => {
     console.log(res.data)
     // console.log('res #',idx," - ",res);
     // Process the sleep data
-    let totalSleep = 0;
+    let totalSleep ={};
     res.data.bucket[0].dataset[0].point.forEach((point) => {
       point.value.forEach((val) => {
         let extract = val["intVal"] || 0;
-        totalSleep += extract;
+        if(!totalSleep[extract])totalSleep[extract]= {name:SleepType[extract],val:0};
+        const timeInSleepType = (point.endTimeNanos-point.startTimeNanos)/1e+9;
+        totalSleep[extract].val +=timeInSleepType;
       });
     });
+    
     const created = {
       Sleep: totalSleep,
       DateStart: new Date(sleepSessions.session[idx].startTimeMillis/1),
       DateEnd:new Date(sleepSessions.session[idx].endTimeMillis/1),
-
     };
+    
     return created;
   });
 };
-
+const SleepType = {
+1:"Awake",
+2:"Sleep",
+3:"Out_of_bed",
+4:"Light_sleep",
+5:"Deep_sleep:",
+6:"REM",
+}
 export const getWeeklySleepData = async (startTime, endTime, requestParameters) => {
   let sleepSessions = await getSleepSessions(startTime, endTime, requestParameters);
   console.log('sleep sessions',sleepSessions);
