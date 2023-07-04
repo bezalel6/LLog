@@ -32,3 +32,8 @@ body {
 .margin-bottom {
   margin-bottom: 10px;
 }
+
+.chart-container {
+  width: 700px;
+  /* height: 400px; */
+}

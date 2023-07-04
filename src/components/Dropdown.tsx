@@ -134,13 +134,16 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
       inputStr: prevState.inputStr,
     }));
   };
-  mouseLeave = () => {
-    // this.setState((prevState) => ({
-    //   isActive: false,
-    //   inputStr: prevState.inputStr,
-    // }));
+  setNotActive = () => {
+    console.log("setting not active");
+
+    this.setState((prevState) => ({
+      isActive: false,
+      inputStr: prevState.inputStr,
+    }));
   };
   onInputReset = () => {
+    this.setNotActive();
     if (!this.inputRef || !this.inputRef.current) return;
     this.inputRef.current.value = "";
     this.inputRef.current.onkeyup(null);
@@ -149,19 +152,22 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
     const { isActive } = this.state;
     const { options } = this.props;
     const activeClass = isActive ? "active" : "";
-
+    const blur = () => {
+      this.setNotActive();
+    };
     return (
-      <div className="container flex-col">
+      <div className="container flex-col" onBlur={blur}>
         {this.props.label && <h4>{this.props.label}</h4>}
 
         <div
           onClick={this.onClick}
-          onMouseLeave={this.mouseLeave}
           className={`dropdown ${activeClass}`}
           ref={this.dropdownRef}
+          onBlur={blur}
         >
           {options.map((option, i) => (
             <div
+              onBlur={blur}
               className="dropdown_option"
               data-active={i == 0 ? "true" : ""}
               data-index={i}
@@ -172,7 +178,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
           ))}
         </div>
         {this.props.customInput && (
-          <div className="input-container">
+          <div onBlur={blur} className="input-container">
             <input
               className="dropdown_custom"
               type="text"

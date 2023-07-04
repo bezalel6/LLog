@@ -15,6 +15,7 @@ import {
   BarElement,
   LineController,
   ChartOptions,
+  TimeUnit,
 } from "chart.js";
 import { Chart, Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
@@ -40,18 +41,25 @@ export interface TimeRange {
 interface ConfigData {
   data: { datasets: any };
   timeRange: TimeRange;
+  unit: TimeUnit;
 }
 const options = (conf: ConfigData): ChartOptions => {
   return {
+    responsive: true,
+    // maintainAspectRatio: false,
     scales: {
       x: {
         type: "time" as const,
         time: {
-          unit: "hour" as const,
+          unit: conf.unit,
+          // unit: "hour" as const,
 
-          displayFormats: {
-            hour: "ha" as const,
-          },
+          // displayFormats: {
+          //   hour: "ha" as const,
+          // },
+        },
+        ticks: {
+          source: "auto",
         },
         min: conf.timeRange.start.getTime(),
         max: conf.timeRange.end.getTime(),
@@ -80,7 +88,7 @@ export default function LineChart({ events }: { events: EventLog[] }) {
   // console.log(data);
 
   return (
-    <div>
+    <div className="chart-container">
       <Chart type="line" options={options(data)} data={data.data}></Chart>
       <Selection<TimeSpan>
         currentValue={timespan}
@@ -123,26 +131,38 @@ function createData(events: EventLog[], timespan: TimeSpan): ConfigData {
     start: new Date(),
     end: new Date(),
   };
-
+  let unit: TimeUnit;
   if (timespan === TimeSpan.Day) {
+    unit = "hour";
     // timeRange.end.setHours(23, 59, 59, 999);
     timeRange.start = moment(new Date()).subtract(1, "day").toDate();
     timeRange.end = moment(new Date()).add(0.5, "day").toDate();
   } else if (timespan === TimeSpan.Week) {
+    unit = "day";
     timeRange.start = moment(new Date()).subtract(1, "weeks").toDate();
+    timeRange.end = moment(new Date()).add(0.5, "weeks").toDate();
   } else if (timespan === TimeSpan.Month) {
+    unit = "week";
     timeRange.start = moment(new Date()).subtract(1, "months").toDate();
+    timeRange.end = moment(new Date()).add(0.5, "months").toDate();
   }
 
   const value: { [eventType: string]: number } = {};
   eventTypes.forEach((t) => (value[t] = 0));
+  let prevE;
   events
     .filter((e) =>
       moment(e.timestamp).isBetween(timeRange.start, timeRange.end)
     )
     .forEach((e) => {
       if (!data.has(e.event_type)) data.set(e.event_type, []);
-
+      if (
+        prevE &&
+        e.timestamp.toDateString() !== prevE.timestamp.toDateString()
+      ) {
+        eventTypes.forEach((t) => (value[t] = 0));
+      }
+      prevE = e;
       data
         .get(e.event_type)
         .push({ y: (value[e.event_type] += e.normalized), x: e.timestamp });
@@ -160,7 +180,7 @@ function createData(events: EventLog[], timespan: TimeSpan): ConfigData {
   });
   // console.log(datasets);
 
-  return { timeRange, data: { datasets } };
+  return { unit, timeRange, data: { datasets } };
 }
 
 enum TimeSpan {

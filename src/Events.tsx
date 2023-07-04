@@ -18,6 +18,7 @@ import { EventLog, PrimitiveEventLog } from "./Event";
 import "./Events.css";
 import List from "./eventsViews/List";
 import LineChart from "./eventsViews/LineChart";
+import Fitness from "./Fitness";
 
 export interface EventsProps {
   setEventLogs: (eventLogs: EventLog[]) => void;
@@ -86,6 +87,8 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
       {currentViewStyle === EventViewStyle.List && (
         <List events={events}></List>
       )}
+
+      {currentViewStyle === EventViewStyle.BarChart && <Fitness></Fitness>}
     </div>
   );
 }
