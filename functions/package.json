@@ -1,0 +1,15 @@
+{
+  "name": "auth-server",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "google-auth-library": "^8.9.0"
+  },
+  "private": true
+}

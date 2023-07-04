@@ -1,15 +1,3 @@
-export function sortKeys<T>(obj: T) {
-  return (
-    Object.keys(obj)
-      .sort()
-      // .reverse()
-      .reduce((objEntries, key) => {
-        objEntries[key] = obj[key];
-
-        return objEntries as T;
-      }, {}) as T
-  );
-}
 export function isNumber(value?: string | number): boolean {
   return (
     value != null &&
@@ -17,6 +5,7 @@ export function isNumber(value?: string | number): boolean {
     !isNaN(Number(value.toString()))
   );
 }
+
 export function formatLabelStr(str: string) {
   const words = str.split(/[_ ]/);
   // eslint-disable-next-line no-debugger

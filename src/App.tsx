@@ -14,7 +14,9 @@ import {
   getRequestHeaders,
   getWeeklyData,
   getWeeklySleepData,
+  stringifySleepData,
 } from "./utils/dataRequestManager";
+import { AxiosError } from "axios";
 
 const app = firebase.initializeApp({
   apiKey: "AIzaSyBv8K7EfFbjG0Bb_Ji7_bQirZ1LXaK7ylw",
@@ -105,22 +107,29 @@ function setAccessToken(token: string | null) {
   else localStorage.removeItem(accessTokenKey);
 }
 
-function getAccessToken() {
+async function getAccessToken() {
   return localStorage.getItem(accessTokenKey);
+  // const res = await auth.getRedirectResult();
+  // return (res.credential as firebase.auth.OAuthCredential).accessToken;
 }
-
-async function rertrieveSleepInfo(accessToken) {
-  // const [weekData, setWeekData] = useState([]);
-  // let weekData = [];
-
-  const selected = [0, 1, 2, 3, 4, 5, 6];
+function catchErr(e: any) {
+  console.error(e);
+  if (e instanceof AxiosError) {
+    if (e.status === 401) {
+      alert("authentication err. please try authenticating again");
+      signOut();
+    }
+  }
+}
+async function rertrieveSleepInfo(accessToken: string) {
   const callBack = (state) => {
     console.table(state);
-    console.log("callback", state);
   };
   const requestHeaders = getRequestHeaders(accessToken);
   const timeRightNow = new Date().getTime();
-  await getWeeklyData(timeRightNow, requestHeaders, callBack, []);
+  await getWeeklyData(timeRightNow, requestHeaders, callBack, []).catch(
+    catchErr
+  );
 
   const startTime = moment(new Date()).subtract("day", 4).toDate();
   const endTime = new Date();
@@ -129,63 +138,14 @@ async function rertrieveSleepInfo(accessToken) {
   await getWeeklySleepData(startTime, endTime, requestParameters)
     .then((data) => {
       console.log("SLEEP", data);
+      console.log(stringifySleepData(data));
     })
-    .catch((err) => {
-      console.log(err);
-    });
-
-  // Replace this with the actual token
-
-  // const headers = new Headers();
-  // headers.append("Content-Type", "application/json");
-  // headers.append("Authorization", "Bearer " + accessToken);
-
-  // const body = {
-  //   aggregateBy: [
-  //     {
-  //       dataTypeName: "com.google.sleep.segment",
-  //     },
-  //   ],
-  //   bucketByTime: { durationMillis: 86400000 }, // One day in milliseconds
-  //   startTimeMillis: new Date().getTime() - 1000 * 60 * 60 * 24 * 4, // Replace this with your start time in milliseconds
-  //   endTimeMillis: new Date().getTime(), // Replace this with your end time in milliseconds
-  // };
-
-  // const options = {
-  //   method: "POST",
-  //   headers,
-  //   body: JSON.stringify(body),
-  // };
-  // const processBuckets = (res: any) => {
-  //   console.log({ res, accessToken });
-
-  //   for (const bucket of res.bucket) {
-  //     bucket.startTimeMillis /= 1000;
-  //     bucket.endTimeMillis /= 1000;
-  //     const start = moment(bucket.startTimeMillis);
-  //     const end = moment(bucket.endTimeMillis);
-
-  //     const diff = bucket.endTimeMillis - bucket.startTimeMillis;
-  //     const f = moment.utc(diff).format("HH:mm:ss.SSS");
-  //     console.log(bucket, f);
-  //     console.log("diff:", { start, end, diff: moment(start).to(end) });
-  //   }
-  // };
-  // fetch(
-  //   "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
-  //   options
-  // )
-  //   .then((response) => response.json())
-  //   .then((data) => processBuckets(data))
-  //   .catch((error) => console.error(error));
+    .catch(catchErr);
 }
-
+const signOut = () => {
+  firebase.auth().signOut().then(location.reload);
+};
 const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
-  const signOut = () => {
-    setAccessToken(null);
-    firebase.auth().signOut().then(location.reload);
-  };
-
   return (
     <div className="sign-out">
       <p>Hello {user.displayName}</p>
@@ -203,7 +163,7 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
         <SignOut user={user} />
         <button
           onClick={() => {
-            rertrieveSleepInfo(getAccessToken());
+            getAccessToken().then((t) => rertrieveSleepInfo(t));
           }}
         >
           shleep
