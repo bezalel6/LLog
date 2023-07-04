@@ -11,9 +11,9 @@ import { EventLog } from "./Event";
 import EventCreator from "./EventCreator";
 import moment from "moment";
 import {
+  getDataForRange,
   getRequestHeaders,
-  getWeeklyData,
-  getWeeklySleepData,
+  getSleepData,
   stringifySleepData,
 } from "./utils/dataRequestManager";
 import { AxiosError } from "axios";
@@ -107,12 +107,12 @@ function setAccessToken(token: string | null) {
   else localStorage.removeItem(accessTokenKey);
 }
 
-async function getAccessToken() {
+export async function getAccessToken() {
   return localStorage.getItem(accessTokenKey);
   // const res = await auth.getRedirectResult();
   // return (res.credential as firebase.auth.OAuthCredential).accessToken;
 }
-function catchErr(e: any) {
+export function catchErr(e: any) {
   console.error(e);
   if (e instanceof AxiosError) {
     if (e.status === 401) {
@@ -126,16 +126,15 @@ async function rertrieveSleepInfo(accessToken: string) {
     console.table(state);
   };
   const requestHeaders = getRequestHeaders(accessToken);
-  const timeRightNow = new Date().getTime();
-  await getWeeklyData(timeRightNow, requestHeaders, callBack, []).catch(
+  const startTime = moment(new Date()).subtract("day", 4).toDate().getTime();
+  const endTime = new Date().getTime();
+  await getDataForRange(startTime, endTime, requestHeaders, callBack, []).catch(
     catchErr
   );
 
-  const startTime = moment(new Date()).subtract("day", 4).toDate();
-  const endTime = new Date();
   const requestParameters = getRequestHeaders(accessToken);
 
-  await getWeeklySleepData(startTime, endTime, requestParameters)
+  await getSleepData(startTime, endTime, requestParameters)
     .then((data) => {
       console.log("SLEEP", data);
       console.log(stringifySleepData(data));
