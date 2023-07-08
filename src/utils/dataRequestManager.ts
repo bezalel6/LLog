@@ -1,5 +1,6 @@
 import axios from "axios";
 import moment, { Duration, Moment } from "moment";
+import { catchErr } from "../App";
 const dataValues = [
   {
     title: "Calories",
@@ -21,7 +22,7 @@ const dataValues = [
 // We need to get aggregated data *on that particular day for now*
 
 // Provide request headers to be attached with each function call
-export const getRequestHeaders = (accessToken) => {
+export const getRequestHeaders = (accessToken: string) => {
   const requestHeaderBody = {
     params: {
       key: import.meta.env.VITE_GCP_API_KEY,
@@ -58,53 +59,57 @@ export const getAggregatedDataBody = (
     };
   return requestBody;
 };
-
+// Each object has : {"Calories" : value, "Heart": value ... , "Date": }
+// const baseObj = {
+//   Calories: 0,
+//   Heart: 0,
+//   Move: 0,
+//   Steps: 0,
+// };
 export const getDataForRange = async (
   startTime: number,
   endTime: number,
-  requestParameters,
-  callBack,
-  initialState
+  requestParameters
 ) => {
-  const state = [];
+  const state: DatedActivityData[] = [];
   const promises = [];
 
   // calculate the difference in days
   const differenceInDays = Math.ceil(Math.abs(endTime - startTime) / 86400000);
 
-  if (initialState.length === 0) {
-    for (let i = differenceInDays - 1; i >= 0; i--) {
-      const currTime = new Date(endTime - i * 86400000);
-      state.push({
-        ...baseObj,
-        Date: currTime,
-      });
-    }
-    dataValues.forEach((element) => {
-      const body = getAggregatedDataBody(element.type, startTime, endTime);
-      promises.push(
-        axios
-          .post(
-            "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
-            body,
-            requestParameters
-          )
-          .then((resp) => {
-            for (let idx = 0; idx < differenceInDays; idx++) {
-              resp.data.bucket[idx].dataset[0].point.forEach((point) => {
-                point.value.forEach((val) => {
-                  const extract = val["intVal"] || Math.ceil(val["fpVal"]) || 0;
-                  state[idx][element.title] += extract;
-                });
-              });
-            }
-          })
-      );
-    });
-    Promise.all(promises).then(() => {
-      callBack(state);
+  for (let i = differenceInDays - 1; i >= 0; i--) {
+    const currTime = new Date(endTime - i * 86400000);
+    state.push({
+      Calories: 0,
+      Heart: 0,
+      Move: 0,
+      Steps: 0,
+      Date: currTime,
     });
   }
+  dataValues.forEach((element) => {
+    const body = getAggregatedDataBody(element.type, startTime, endTime);
+    promises.push(
+      axios
+        .post(
+          "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
+          body,
+          requestParameters
+        )
+        .then((resp) => {
+          for (let idx = 0; idx < differenceInDays; idx++) {
+            resp.data.bucket[idx].dataset[0].point.forEach((point) => {
+              point.value.forEach((val) => {
+                const extract = val["intVal"] || Math.ceil(val["fpVal"]) || 0;
+                state[idx][element.title] += extract;
+              });
+            });
+          }
+        })
+    );
+  });
+  await Promise.all(promises);
+  return state;
 };
 
 export const getAggregateData = async (body, headers) => {
@@ -116,28 +121,22 @@ export const getAggregateData = async (body, headers) => {
   return req;
 };
 
-// we need to return [{Today}, {Yesterday} .... {7 days back}]
-// Each object has : {"Calories" : value, "Heart": value ... , "Date": }
-const baseObj = {
-  Calories: 0,
-  Heart: 0,
-  Move: 0,
-  Steps: 0,
-};
-
-export const getSleepSessions = async (
+const getSleepSessions = async (
   startTime: number,
   endTime: number,
   headers
 ) => {
-  const res = await axios.get(
-    `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${new Date(
-      startTime
-    ).toISOString()}&endTime=${new Date(
-      endTime
-    ).toISOString()}&activityType=72`,
-    headers
-  );
+  const res = await axios
+    .get(
+      `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${new Date(
+        startTime
+      ).toISOString()}&endTime=${new Date(
+        endTime
+      ).toISOString()}&activityType=72`,
+      headers
+    )
+    .catch(catchErr)
+    .then(() => Promise.resolve({ data: [] }));
   return res.data;
 };
 
@@ -193,6 +192,21 @@ const getSleepSegments = async (sleepSessions, headers): Promise<SleepData> => {
     return created;
   });
 };
+
+export const getSleepData = async (
+  startTime: number,
+  endTime: number,
+  requestParameters
+) => {
+  const sleepSessions = await getSleepSessions(
+    startTime,
+    endTime,
+    requestParameters
+  );
+  const sleepData = await getSleepSegments(sleepSessions, requestParameters);
+  return sleepData;
+};
+
 export function stringifySleepData(sleepData: SleepData) {
   let ret = "";
   sleepData.forEach((night) => {
@@ -216,6 +230,16 @@ export function stringifySleepSegment(segment: SleepSegment) {
   return SleepType[segment.sleepType] + " " + segment.duration.humanize();
 }
 
+export type ActivityData = {
+  Calories: number;
+  Heart: number;
+  Move: number;
+  Steps: number;
+};
+export type DatedActivityData = ActivityData & {
+  Date: Date;
+};
+
 export type SleepData = {
   Sleep: Map<number, SleepSegment>;
   DateStart: Date;
@@ -236,16 +260,3 @@ export enum SleepType {
   Deep_sleep = 5,
   REM = 6,
 }
-export const getSleepData = async (
-  startTime: number,
-  endTime: number,
-  requestParameters
-) => {
-  const sleepSessions = await getSleepSessions(
-    startTime,
-    endTime,
-    requestParameters
-  );
-  const sleepData = await getSleepSegments(sleepSessions, requestParameters);
-  return sleepData;
-};

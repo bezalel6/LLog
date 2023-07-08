@@ -2,6 +2,7 @@
     /* max-width: 500px; */
     max-height: 400px;
     overflow-y: scroll;
+    overflow-x: auto;
 }
 #root {
     --box-bg: rgb(19, 126, 58);

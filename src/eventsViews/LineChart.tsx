@@ -1,5 +1,5 @@
 import { EventLog } from "../Event";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -18,9 +18,11 @@ import {
   TimeUnit,
 } from "chart.js";
 import { Chart, Line } from "react-chartjs-2";
-import "chartjs-adapter-date-fns";
+// import "chartjs-adapter-date-fns";
 import Selection from "../components/SelectionButtons";
 import moment from "moment";
+import { generateActivityInfo, generateSleepInfo } from "../utils/activities";
+import { catchErr } from "../App";
 ChartJS.register(
   LinearScale,
   CategoryScale,
@@ -82,14 +84,31 @@ const options = (conf: ConfigData): ChartOptions => {
 };
 export default function LineChart({ events }: { events: EventLog[] }) {
   const [timespan, setTimeSpan] = useState(TimeSpan.Day);
+  const [configData, setConfigData] = useState<ConfigData>(null);
 
-  const data = createData(events, timespan);
+  async function a() {
+    const conf = await createData(events, timespan);
+    setConfigData(conf);
+  }
+
+  useEffect(() => {
+    a();
+  }, []);
+  useEffect(() => {
+    a();
+  }, [events, timespan]);
 
   // console.log(data);
 
   return (
     <div className="chart-container">
-      <Chart type="line" options={options(data)} data={data.data}></Chart>
+      {configData && (
+        <Chart
+          type="line"
+          options={options(configData)}
+          data={configData.data}
+        ></Chart>
+      )}
       <Selection<TimeSpan>
         currentValue={timespan}
         enumV={TimeSpan}
@@ -121,7 +140,10 @@ function groupEventsByTime(events: EventLog[], maxTimeDiffMs: number) {
   return grouped;
 }
 
-function createData(events: EventLog[], timespan: TimeSpan): ConfigData {
+async function createData(
+  events: EventLog[],
+  timespan: TimeSpan
+): Promise<ConfigData> {
   // Group events by date
 
   const eventTypes = getEventTypes(events);
@@ -146,8 +168,13 @@ function createData(events: EventLog[], timespan: TimeSpan): ConfigData {
     timeRange.start = moment(new Date()).subtract(1, "months").toDate();
     timeRange.end = moment(new Date()).add(0.5, "months").toDate();
   }
-
+  // const activities = await generateActivityInfo(timeRange);
+  const sleep = await generateSleepInfo(timeRange).catch((e) => {
+    catchErr(e);
+    return [];
+  });
   const value: { [eventType: string]: number } = {};
+
   eventTypes.forEach((t) => (value[t] = 0));
   let prevE;
   events
@@ -180,10 +207,10 @@ function createData(events: EventLog[], timespan: TimeSpan): ConfigData {
   });
   // console.log(datasets);
 
-  return { unit, timeRange, data: { datasets } };
+  return { unit, timeRange, data: { datasets: [...datasets, ...sleep] } };
 }
 
-enum TimeSpan {
+export enum TimeSpan {
   Day,
   Week,
   Month,

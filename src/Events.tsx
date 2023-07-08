@@ -12,13 +12,11 @@ import {
   getDocs,
   orderBy,
 } from "firebase/firestore";
-import { sortKeys } from "./utils/utils";
 import { EventLog, PrimitiveEventLog } from "./Event";
 
 import "./Events.css";
 import List from "./eventsViews/List";
 import LineChart from "./eventsViews/LineChart";
-import Fitness from "./Fitness";
 
 export interface EventsProps {
   setEventLogs: (eventLogs: EventLog[]) => void;
@@ -88,7 +86,7 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
         <List events={events}></List>
       )}
 
-      {currentViewStyle === EventViewStyle.BarChart && <Fitness></Fitness>}
+      {/* {currentViewStyle === EventViewStyle.BarChart && <Fitness></Fitness>} */}
     </div>
   );
 }

@@ -14,6 +14,7 @@ const Fitness: React.FC<IFitnessProps> = () => {
   const authenticate = (
     response: GoogleLoginResponse | GoogleLoginResponseOffline
   ) => {
+    console.log(response);
     if ("tokenId" in response) {
       const { googleId, tokenId } = response;
 
@@ -26,7 +27,7 @@ const Fitness: React.FC<IFitnessProps> = () => {
         })
         .then(
           () => {
-            console.log("Sign-in successful");
+            console.log("Sign-in successful", tokenId);
             loadClient(tokenId);
           },
           (err: any) => {
@@ -74,7 +75,7 @@ const Fitness: React.FC<IFitnessProps> = () => {
   return (
     <div>
       <GoogleLogin
-        clientId="714915520957-rqn9osl5174oio77jqe64dnc4nbh8vrq.apps.googleusercontent.com"
+        clientId={import.meta.env.VITE_GCP_CLIENT_ID}
         buttonText="Authorize and Load"
         onSuccess={authenticate}
         onFailure={authenticate}

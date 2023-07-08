@@ -16,10 +16,14 @@ import {
   getSleepData,
   stringifySleepData,
 } from "./utils/dataRequestManager";
+
 import { AxiosError } from "axios";
+import GoogleLoginPage, { GoogleLoginResponse } from "./GoogleLoginPage";
+import Fitness from "./Fitness";
+import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 
 const app = firebase.initializeApp({
-  apiKey: "AIzaSyBv8K7EfFbjG0Bb_Ji7_bQirZ1LXaK7ylw",
+  apiKey: import.meta.env.VITE_GCP_API_KEY,
   authDomain: "llog-9e6bc.firebaseapp.com",
   projectId: "llog-9e6bc",
   storageBucket: "llog-9e6bc.appspot.com",
@@ -34,6 +38,8 @@ const App: FC = () => {
   const [user, setUser] = React.useState<firebase.User | null | "initializing">(
     "initializing"
   );
+  const login = useGoogleLogin({ flow: "implicit" });
+  console.log(login);
 
   React.useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -44,17 +50,19 @@ const App: FC = () => {
 
   return (
     <div className="App">
-      {user === "initializing" ? (
-        "Initializing..."
-      ) : user ? (
-        <LoggedIn user={user} />
-      ) : (
-        <SignIn />
-      )}
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
+        {user === "initializing" ? (
+          "Initializing..."
+        ) : user ? (
+          <LoggedIn user={user} />
+        ) : (
+          <SignIn />
+        )}
+      </GoogleOAuthProvider>
     </div>
   );
 };
-const scopes = [
+export const scopes = [
   "https://www.googleapis.com/auth/fitness.activity.read",
   "https://www.googleapis.com/auth/fitness.activity.write",
   "https://www.googleapis.com/auth/fitness.blood_glucose.read",
@@ -79,7 +87,9 @@ const scopes = [
   "https://www.googleapis.com/auth/fitness.sleep.write",
 ];
 const SignIn: FC = () => {
-  const signInWithGoogle = () => {
+  const signInWithGoogle = async () => {
+    // const gapiA = await loadAuth2(gapi, clientID, scopes.join(" "));
+    // console.log({ gapi: gapiA });
     const provider = new firebase.auth.GoogleAuthProvider();
     scopes.forEach((scope) => {
       provider.addScope(scope);
@@ -93,11 +103,36 @@ const SignIn: FC = () => {
       }
     });
   };
-
+  const onRes = (res: GoogleLoginResponse) => {
+    console.log(res);
+    const credential = firebase.auth.GoogleAuthProvider.credential(
+      res.credential,
+      res.clientId
+    );
+    firebase
+      .auth()
+      .signInWithCredential(credential)
+      .then((result) => {
+        console.log("got user", result);
+        // if (result.credential) {
+        //   // This gives you a Google Access Token.
+        //   const token = (result.credential as firebase.auth.OAuthCredential)
+        //     .accessToken;
+        //   setAccessToken(token);
+        // }
+      })
+      .catch((e) => {
+        console.error("error logging into firebase", e);
+      });
+  };
+  const onErr = () => {
+    console.error("err logging into google");
+  };
   return (
-    <button className="sign-in" onClick={signInWithGoogle}>
-      Sign in with Google
-    </button>
+    // <button className="sign-in" onClick={signInWithGoogle}>
+    //   Sign in with Google
+    // </button>
+    <GoogleLoginPage onRes={onRes} onErr={onErr} />
   );
 };
 
@@ -108,13 +143,13 @@ function setAccessToken(token: string | null) {
 }
 
 export async function getAccessToken() {
-  return localStorage.getItem(accessTokenKey);
+  return Promise.resolve(localStorage.getItem(accessTokenKey));
   // const res = await auth.getRedirectResult();
   // return (res.credential as firebase.auth.OAuthCredential).accessToken;
 }
 export function catchErr(e: any) {
   console.error(e);
-  if (e instanceof AxiosError) {
+  if (e.name === "AxiosError") {
     if (e.status === 401) {
       alert("authentication err. please try authenticating again");
       signOut();
@@ -122,15 +157,12 @@ export function catchErr(e: any) {
   }
 }
 async function rertrieveSleepInfo(accessToken: string) {
-  const callBack = (state) => {
-    console.table(state);
-  };
   const requestHeaders = getRequestHeaders(accessToken);
   const startTime = moment(new Date()).subtract("day", 4).toDate().getTime();
   const endTime = new Date().getTime();
-  await getDataForRange(startTime, endTime, requestHeaders, callBack, []).catch(
-    catchErr
-  );
+  // await getDataForRange(startTime, endTime, requestHeaders, callBack, []).catch(
+  // catchErr
+  // );
 
   const requestParameters = getRequestHeaders(accessToken);
 
