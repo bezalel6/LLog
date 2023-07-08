@@ -49,13 +49,13 @@ export async function generateActivityInfo(
 export async function generateSleepInfo(
   timeRange: TimeRange
 ): Promise<Dataset> {
+  console.time("sleep-info");
   const accessToken = await getAccessToken();
   const sleepData = await getSleepData(
     timeRange.start.getTime(),
     timeRange.end.getTime(),
     getRequestHeaders(accessToken)
   );
-
   const data = new Map<string, any>();
   let segmentKeys = [];
   let hours = 0;
@@ -68,7 +68,7 @@ export async function generateSleepInfo(
     //     value[sleepType]+=segment.timeSleptMS;
     // });
     if (!data.get("Sleep")) data.set("Sleep", []);
-    data.get("Sleep").push({ y: 0, x: night.DateStart.getTime() });
+    // data.get("Sleep").push({ y: 0, x: night.DateStart.getTime() });
     data.get("Sleep").push({ y: sum(night.Sleep), x: night.DateEnd.getTime() });
   });
 
@@ -79,6 +79,7 @@ export async function generateSleepInfo(
     borderWidth: 2,
   };
   data.get("Sleep").forEach((n) => singleDataset.data.push(n));
+  console.timeEnd("sleep-info");
   return [singleDataset];
 }
 

@@ -19,6 +19,8 @@ const dataValues = [
     type: "com.google.step_count.delta",
   },
 ];
+axios.defaults.withCredentials = true;
+
 // We need to get aggregated data *on that particular day for now*
 
 // Provide request headers to be attached with each function call
@@ -94,7 +96,7 @@ export const getDataForRange = async (
         .post(
           "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
           body,
-          requestParameters
+          { ...requestParameters, withCredentials: false }
         )
         .then((resp) => {
           for (let idx = 0; idx < differenceInDays; idx++) {
@@ -116,7 +118,7 @@ export const getAggregateData = async (body, headers) => {
   const req = await axios.post(
     "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
     body,
-    headers
+    { ...headers, withCredentials: false }
   );
   return req;
 };
@@ -133,10 +135,13 @@ const getSleepSessions = async (
       ).toISOString()}&endTime=${new Date(
         endTime
       ).toISOString()}&activityType=72`,
-      headers
+      { ...headers, withCredentials: false }
     )
-    .catch(catchErr)
-    .then(() => Promise.resolve({ data: [] }));
+    .catch((e) => {
+      catchErr(e);
+      return { data: [] };
+    });
+  // .then(() => Promise.resolve({ data: [] }));
   return res.data;
 };
 
@@ -154,7 +159,7 @@ const getSleepSegments = async (sleepSessions, headers): Promise<SleepData> => {
       axios.post(
         "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
         body,
-        headers
+        { ...headers, withCredentials: false }
       )
     );
   });

@@ -18,7 +18,7 @@ import {
   TimeUnit,
 } from "chart.js";
 import { Chart, Line } from "react-chartjs-2";
-// import "chartjs-adapter-date-fns";
+import "chartjs-adapter-date-fns";
 import Selection from "../components/SelectionButtons";
 import moment from "moment";
 import { generateActivityInfo, generateSleepInfo } from "../utils/activities";
