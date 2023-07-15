@@ -19,12 +19,14 @@ const dataValues = [
     type: "com.google.step_count.delta",
   },
 ];
-axios.defaults.withCredentials = true;
+// axios.defaults.withCredentials = true;
 
 // We need to get aggregated data *on that particular day for now*
 
 // Provide request headers to be attached with each function call
 export const getRequestHeaders = (accessToken: string) => {
+  if (!accessToken) debugger;
+  // console.log("creating request headers with access token:", accessToken);
   const requestHeaderBody = {
     params: {
       key: import.meta.env.VITE_GCP_API_KEY,

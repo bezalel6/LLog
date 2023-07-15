@@ -8,12 +8,16 @@ import {
   getSleepData,
 } from "./dataRequestManager";
 import { getAccessToken } from "../Backend";
+import { useContext } from "react";
+import { GoogleAuthContext, GoogleAuthType } from "../contexts";
 
 export async function generateActivityInfo(
-  timeRange: TimeRange
+  timeRange: TimeRange,
+  googleAuth: GoogleAuthType
 ): Promise<Dataset> {
-  const accessToken = await getAccessToken();
-  const headers = getRequestHeaders(accessToken);
+  // const accessToken = await getAccessToken();
+  const accessToken = googleAuth;
+  const headers = getRequestHeaders(accessToken.access_token);
   const activityDays = await getDataForRange(
     timeRange.start.getTime(),
     timeRange.end.getTime(),
@@ -47,14 +51,16 @@ export async function generateActivityInfo(
 }
 
 export async function generateSleepInfo(
-  timeRange: TimeRange
+  timeRange: TimeRange,
+  googleAuth: GoogleAuthType
 ): Promise<Dataset> {
   console.time("sleep-info");
-  const accessToken = await getAccessToken();
+  // const accessToken = await getAccessToken();
+  const accessToken = googleAuth;
   const sleepData = await getSleepData(
     timeRange.start.getTime(),
     timeRange.end.getTime(),
-    getRequestHeaders(accessToken)
+    getRequestHeaders(accessToken.access_token)
   );
   const data = new Map<string, any>();
   let segmentKeys = [];

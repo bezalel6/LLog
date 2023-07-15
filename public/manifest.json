@@ -33,7 +33,7 @@
       "name": "Attent 15mg",
       "short_name": "Attent",
       "description": "Add 15mg of attent to log",
-      "url": "/?",
+      "url": "/?preset=Attent",
       "icons": [
         { "src": "icons/manifest-icon-192.maskable.png", "sizes": "192x192" }
       ]

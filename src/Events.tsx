@@ -1,7 +1,7 @@
 /* eslint-disable no-debugger */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { FirebaseContext, UserContext } from "./contexts";
+import { FirebaseContext, GoogleAuthContext, UserContext } from "./contexts";
 import { useCollection } from "react-firebase-hooks/firestore";
 import Selection from "./components/SelectionButtons";
 import {
@@ -65,7 +65,6 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
       setEventLogs(events);
     }
   }, [events, currentLogs, setEventLogs]);
-
   const [currentViewStyle, setCurrentViewStyle] = useState(EventViewStyle.List);
   return (
     <div className="events">

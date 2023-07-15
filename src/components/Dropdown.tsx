@@ -137,10 +137,10 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
   setNotActive = () => {
     console.log("setting not active");
 
-    this.setState((prevState) => ({
+    this.state = {
       isActive: false,
-      inputStr: prevState.inputStr,
-    }));
+      inputStr: this.state.inputStr,
+    };
   };
   onInputReset = () => {
     this.setNotActive();

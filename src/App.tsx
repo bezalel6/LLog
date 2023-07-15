@@ -1,6 +1,6 @@
 /* eslint-disable no-inner-declarations */
 import "./App.css";
-import React, { FC, useContext, useEffect, useState } from "react";
+import React, { FC, useContext, useEffect, useRef, useState } from "react";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/messaging";
@@ -13,7 +13,11 @@ import {
 } from "./contexts";
 import Events from "./Events";
 import { EventLog } from "./Event";
-import EventCreator, { GUIEventLog } from "./EventCreator";
+import EventCreator, {
+  EventPresets,
+  GUIEventLog,
+  GlobalAddEventToDB,
+} from "./EventCreator";
 import moment from "moment";
 import {
   getDataForRange,
@@ -26,8 +30,10 @@ import axios, { AxiosError } from "axios";
 import {
   GoogleLogin,
   GoogleOAuthProvider,
+  TokenResponse,
   // GoogleOAuthProvider,
   googleLogout,
+  hasGrantedAllScopesGoogle,
   useGoogleLogin,
   useGoogleOneTapLogin,
 } from "@react-oauth/google";
@@ -44,7 +50,7 @@ const app = firebase.initializeApp({
   appId: "1:240965235389:web:e580f88807edc926227dd4",
   measurementId: "G-1WTVS2RTGR",
 });
-axios.defaults.withCredentials = true;
+// axios.defaults.withCredentials = true;
 
 const auth = firebase.auth();
 
@@ -53,33 +59,35 @@ const App: FC = () => {
     "initializing"
   );
   const [googleAuth, setGoogleAuth] = React.useState<GoogleAuthType>(null);
-  const [backendConnected, setBackendConnected] = React.useState(false);
-  const setAuth = (token: string) => {
+  const setAuth = (token: GoogleAuthType) => {
     const credential = firebase.auth.GoogleAuthProvider.credential(
-      token,
-      token
+      null,
+      token.access_token
     );
     firebase
       .auth()
       .signInWithCredential(credential)
       .then(() => {
         console.log("successfully logged into firebase");
+        // hasGrantedAllScopesGoogle();
         setGoogleAuth(token);
       })
       .catch((e) => console.error("error logging into firebase " + e));
   };
   React.useEffect(() => {
-    alive().then(setBackendConnected);
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-    });
-
-    return unsubscribe;
+    async function au() {
+      await firebase
+        .auth()
+        .setPersistence(firebase.auth.Auth.Persistence.SESSION);
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        setUser(user);
+      });
+    }
+    au();
   }, []);
 
   return (
     <div className="App">
-      {!backendConnected && <div>Connecting to server...</div>}
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
         <GoogleAuthContext.Provider
           value={{ auth: googleAuth, setAuth: setAuth }}
@@ -93,6 +101,11 @@ const App: FC = () => {
           )}
         </GoogleAuthContext.Provider>
       </GoogleOAuthProvider>
+      <div className="footer">
+        <a href="https://www.freeprivacypolicy.com/live/181543f2-ce03-4f06-8f10-494b6416e31f">
+          Privacy Policy
+        </a>
+      </div>
     </div>
   );
 };
@@ -133,63 +146,77 @@ const SignIn: FC = () => {
   // );
   const authContext = useContext(GoogleAuthContext);
 
-  const login = useGoogleOneTapLogin({
-    onSuccess: async (res) => {
-      console.log("succ", res);
-      authContext.setAuth(res.credential);
-      // const data = await signIn(code);
+  // useGoogleOneTapLogin({
+  //   onSuccess: async (res) => {
+  //     console.log("succ", res);
+  //     authContext.setAuth(res.credential);
+  //     // const data = await signIn(code);
 
-      // setAccessToken(tokens)
-      // console.log(tokens);
-    },
-    onError: () => {
-      console.error("err");
-    },
-  });
-  // const l = useGoogleLogin({});
-  // l.
-  // const googleLogin = useGoogleLogin({
-  //   onSuccess: async ({ code }) => {
-  //     console.log("succ", { code });
-
-  //     const data = await signIn(code);
-  //     const credential = firebase.auth.GoogleAuthProvider.credential(
-  //       data.id_token,
-  //       data.access_token
-  //     );
-  //     firebase
-  //       .auth()
-  //       .signInWithCredential(credential)
-  //       .then(() => console.log("successfully logged into firebase"))
-  //       .catch((e) => console.error("error logging into firebase " + e));
   //     // setAccessToken(tokens)
   //     // console.log(tokens);
   //   },
-  //   onError(errorResponse) {
-  //     console.error(errorResponse);
+  //   onError: () => {
+  //     console.error("err");
   //   },
-  //   flow: "auth-code",
+
   // });
+  const googleLogin = useGoogleLogin({
+    onSuccess: (res) => {
+      console.log("succ", res);
+      authContext.setAuth(res);
+    },
+    onError(errorResponse) {
+      console.error(errorResponse);
+    },
+    scope: scopes.join(" "),
+    flow: "implicit",
+  });
 
   return (
     <>
-      {/* <button onClick={() => googleLogin()}>Sign In With Google</button> */}
+      {/* <GoogleLogin
+        locale="he-il"
+        onSuccess={(res) => {
+          authContext.setAuth(res.credential);
+        }}
+        onError={() => console.error("login failed")}
+        useOneTap
+        auto_select
+      ></GoogleLogin> */}
+      <button onClick={() => googleLogin()}>Sign In With Google</button>
     </>
   );
 };
-function checkEventInParams() {
+function err(e: any) {
+  console.error(e);
+}
+const checkEventInParams = (addEventToDB: (e: GUIEventLog) => void) => {
   const params = new URLSearchParams(window.location.search);
   if (params.size) {
-    const e: GUIEventLog = {
-      amount: Number(params.get("amount")),
-      event_type: params.get("event_type"),
-      unit: params.get("unit"),
-    };
+    let e: GUIEventLog;
+    if (params.has("preset")) {
+      const presetName = params.get("preset");
+      if (!EventPresets[presetName]) {
+        err("preset " + presetName + " doesnt exist");
+        return;
+      } else {
+        e = EventPresets[presetName];
+      }
+    } else {
+      e = {
+        amount: Number(params.get("amount")),
+        event_type: params.get("event_type"),
+        unit: params.get("unit"),
+      };
+    }
     console.log(e);
+    addEventToDB(e);
   }
-}
+};
 export function catchErr(e: any) {
-  console.error("caught error: " + e);
+  console.error("caught error");
+  console.error({ e });
+
   if (e.name === "AxiosError") {
     if (e.status === 401) {
       alert("authentication err. please try authenticating again");
@@ -214,7 +241,7 @@ const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
   useEffect(() => {
-    checkEventInParams();
+    checkEventInParams(GlobalAddEventToDB);
   }, []);
   return (
     <FirebaseContext.Provider value={app}>

@@ -1,5 +1,5 @@
 import { EventLog } from "../Event";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,6 +23,7 @@ import Selection from "../components/SelectionButtons";
 import moment from "moment";
 import { generateActivityInfo, generateSleepInfo } from "../utils/activities";
 import { catchErr } from "../App";
+import { GoogleAuthContext, GoogleAuthType } from "../contexts";
 ChartJS.register(
   LinearScale,
   CategoryScale,
@@ -85,10 +86,13 @@ const options = (conf: ConfigData): ChartOptions => {
 export default function LineChart({ events }: { events: EventLog[] }) {
   const [timespan, setTimeSpan] = useState(TimeSpan.Day);
   const [configData, setConfigData] = useState<ConfigData>(null);
+  const googleAuth = useContext(GoogleAuthContext);
 
   async function a() {
-    const conf = await createData(events, timespan);
-    setConfigData(conf);
+    if (googleAuth.auth) {
+      const conf = await createData(events, timespan, googleAuth.auth);
+      setConfigData(conf);
+    }
   }
 
   useEffect(() => {
@@ -96,7 +100,7 @@ export default function LineChart({ events }: { events: EventLog[] }) {
   }, []);
   useEffect(() => {
     a();
-  }, [events, timespan]);
+  }, [events, timespan, googleAuth]);
 
   // console.log(data);
 
@@ -142,7 +146,8 @@ function groupEventsByTime(events: EventLog[], maxTimeDiffMs: number) {
 
 async function createData(
   events: EventLog[],
-  timespan: TimeSpan
+  timespan: TimeSpan,
+  googleAuth: GoogleAuthType
 ): Promise<ConfigData> {
   // Group events by date
 
@@ -169,7 +174,7 @@ async function createData(
     timeRange.end = moment(new Date()).add(0.5, "months").toDate();
   }
   // const activities = await generateActivityInfo(timeRange);
-  const sleep = await generateSleepInfo(timeRange).catch((e) => {
+  const sleep = await generateSleepInfo(timeRange, googleAuth).catch((e) => {
     catchErr(e);
     return [];
   });
