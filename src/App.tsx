@@ -168,6 +168,7 @@ const SignIn: FC = () => {
     onError(errorResponse) {
       console.error(errorResponse);
     },
+
     scope: scopes.join(" "),
     flow: "implicit",
   });
