@@ -42,7 +42,7 @@ import jwtDecode from "jwt-decode";
 import { GitModule } from "@faker-js/faker";
 
 const app = firebase.initializeApp({
-  apiKey: import.meta.env.VITE_GCP_API_KEY,
+  apiKey: "AIzaSyBv8K7EfFbjG0Bb_Ji7_bQirZ1LXaK7ylw",
   authDomain: "llog-9e6bc.firebaseapp.com",
   projectId: "llog-9e6bc",
   storageBucket: "llog-9e6bc.appspot.com",
