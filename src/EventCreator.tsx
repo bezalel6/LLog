@@ -18,14 +18,14 @@ export type InputType = "number";
 // export type InputType = "number"  | "text";
 export interface GUIEventLog {
   amount: number;
-  amount_type: string;
+  unit: string;
   event_type: string;
   // input_type: InputType;
 }
 function convertEventLogToGUI(eventLog: EventLog): GUIEventLog {
   return {
     amount: eventLog.amount,
-    amount_type: eventLog.units,
+    unit: eventLog.units,
     event_type: eventLog.event_type,
 
     // input_type: "number",
@@ -34,7 +34,7 @@ function convertEventLogToGUI(eventLog: EventLog): GUIEventLog {
 function convertGUIEventLogToSend(eventLogGUI: GUIEventLog): PrimitiveEventLog {
   return {
     amount: eventLogGUI.amount,
-    units: eventLogGUI.amount_type,
+    units: eventLogGUI.unit,
     event_type: eventLogGUI.event_type,
     createdAt: serverTimestamp(),
   };
@@ -58,14 +58,16 @@ export class EventEmittor {
     this.listeners.forEach((l) => l());
   }
 }
+let emittorInstance: EventEmittor | null = null;
 export default function EventCreator({ eventLogs }: EventCreatorProps) {
   const convertedEvents = eventLogs.map(convertEventLogToGUI);
   // console.log(convertedEvents);
   const eventEmittor = useRef(new EventEmittor()).current;
+  emittorInstance = eventEmittor;
 
   const formData = useRef<GUIEventLog>({
     amount: -1,
-    amount_type: " ",
+    unit: " ",
     event_type: " ",
   }).current;
 
@@ -85,7 +87,7 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
   if (!convertedEvents.length) {
     // console.log("didnt get any events. generating dummy...");
 
-    const k: GUIEventLog = { amount: 0, amount_type: "", event_type: "" };
+    const k: GUIEventLog = { amount: 0, unit: "", event_type: "" };
     Object.keys(k).forEach((key, i) => {
       addOption(null, key, i);
     });
@@ -93,30 +95,31 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
     // console.log("got events.");
   }
 
-  const firebase = useContext(FirebaseContext)!;
-  const user = useContext(UserContext)!;
+  // const firebase = useContext(FirebaseContext)!;
+  // const user = useContext(UserContext)!;
 
   const onSubmit = async (e: any) => {
     e.preventDefault();
-    console.log("submitting", formData);
+    addEventToDB(formData);
+    // console.log("submitting", formData);
 
-    const db = getFirestore(firebase);
+    // const db = getFirestore(firebase);
 
-    const eventsRef = collection(db, "events");
-    const doc = { ...convertGUIEventLogToSend(formData), uid: user.uid };
-    if (!validateDoc(doc)) {
-      console.error("values not valid");
-      return;
-    }
-    await addDoc(eventsRef, doc)
-      .then(() => {
-        console.log("succesfully added " + formData.event_type);
-        eventEmittor.emit();
-      })
-      .catch((e) => {
-        console.error("error" + e + "occured using:" + formData);
-        alert("error writing to the db: " + e);
-      });
+    // const eventsRef = collection(db, "events");
+    // const doc = { ...convertGUIEventLogToSend(formData), uid: user.uid };
+    // if (!validateDoc(doc)) {
+    //   console.error("values not valid");
+    //   return;
+    // }
+    // await addDoc(eventsRef, doc)
+    //   .then(() => {
+    //     console.log("succesfully added " + formData.event_type);
+    //     eventEmittor.emit();
+    //   })
+    //   .catch((e) => {
+    //     console.error("error" + e + "occured using:" + formData);
+    //     alert("error writing to the db: " + e);
+    //   });
   };
 
   const makeOnSelectionFunc = (dropdownIndex: number) => {
@@ -159,4 +162,26 @@ export default function EventCreator({ eventLogs }: EventCreatorProps) {
       </form>
     </>
   );
+}
+export async function addEventToDB(eventData: GUIEventLog) {
+  console.log("submitting", eventData);
+  const firebase = useContext(FirebaseContext)!;
+  const user = useContext(UserContext)!;
+  const db = getFirestore(firebase);
+
+  const eventsRef = collection(db, "events");
+  const doc = { ...convertGUIEventLogToSend(eventData), uid: user.uid };
+  if (!validateDoc(doc)) {
+    console.error("values not valid");
+    return;
+  }
+  await addDoc(eventsRef, doc)
+    .then(() => {
+      console.log("succesfully added " + eventData.event_type);
+      emittorInstance.emit();
+    })
+    .catch((e) => {
+      console.error("error" + e + "occured using:" + eventData);
+      alert("error writing to the db: " + e);
+    });
 }

@@ -8,7 +8,7 @@ import "firebase/compat/firestore";
 import { FirebaseContext, UserContext } from "./contexts";
 import Events from "./Events";
 import { EventLog } from "./Event";
-import EventCreator from "./EventCreator";
+import EventCreator, { GUIEventLog } from "./EventCreator";
 import moment from "moment";
 import {
   getDataForRange,
@@ -19,11 +19,15 @@ import {
 
 import axios, { AxiosError } from "axios";
 import {
+  GoogleLogin,
   GoogleOAuthProvider,
   googleLogout,
   useGoogleLogin,
+  useGoogleOneTapLogin,
 } from "@react-oauth/google";
-import { signIn } from "./Backend";
+import { alive, signIn } from "./Backend";
+import jwtDecode from "jwt-decode";
+import { GitModule } from "@faker-js/faker";
 
 const app = firebase.initializeApp({
   apiKey: import.meta.env.VITE_GCP_API_KEY,
@@ -42,8 +46,10 @@ const App: FC = () => {
   const [user, setUser] = React.useState<firebase.User | null | "initializing">(
     "initializing"
   );
+  const [backendConnected, setBackendConnected] = React.useState(false);
 
   React.useEffect(() => {
+    alive().then(setBackendConnected);
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
     });
@@ -53,6 +59,7 @@ const App: FC = () => {
 
   return (
     <div className="App">
+      {!backendConnected && <div>Connecting to server...</div>}
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
         {user === "initializing" ? (
           "Initializing..."
@@ -90,27 +97,28 @@ export const scopes = [
   "https://www.googleapis.com/auth/fitness.sleep.write",
 ];
 const SignIn: FC = () => {
-  const googleLogin = useGoogleLogin({
-    onSuccess: async ({ code }) => {
-      const data = await signIn(code);
-      const credential = firebase.auth.GoogleAuthProvider.credential(
-        data.id_token,
-        data.access_token
-      );
-      firebase
-        .auth()
-        .signInWithCredential(credential)
-        .then(() => console.log("successfully logged into firebase"))
-        .catch((e) => console.error("error logging into firebase " + e));
-      // setAccessToken(tokens)
-      // console.log(tokens);
-    },
-    flow: "auth-code",
-  });
-
-  return <button onClick={() => googleLogin()}>Sign In With Google</button>;
+  return (
+    <GoogleLogin
+      onSuccess={(res) => {
+        console.log(res);
+      }}
+      onError={() => {
+        console.error("err");
+      }}
+      useOneTap
+    ></GoogleLogin>
+  );
 };
-
+function checkEventInParams() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.size) {
+    const obj = {};
+    params.forEach((val, key) => {
+      obj[key] = val;
+    });
+    console.log({ obj });
+  }
+}
 export function catchErr(e: any) {
   console.error("caught error: " + e);
   if (e.name === "AxiosError") {
@@ -136,7 +144,7 @@ const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
 
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
-
+  checkEventInParams();
   return (
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>

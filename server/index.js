@@ -3,7 +3,7 @@ const express = require("express");
 const { OAuth2Client } = require("google-auth-library");
 const cors = require("cors");
 const session = require("express-session");
-
+const port = process.env.PORT || 3030;
 const app = express();
 const oAuth2Client = new OAuth2Client(
   process.env.CLIENT_ID,
@@ -11,9 +11,13 @@ const oAuth2Client = new OAuth2Client(
   "postmessage"
 );
 
+// app.use(cors({ credentials: true, origin: "*" }));
 app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 app.use(express.json());
-
+// app.use((req, res, next) => {
+//   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+//   next();
+// });
 // Setup session middleware
 app.use(
   session({
@@ -24,7 +28,7 @@ app.use(
   })
 );
 
-app.get("alive", (req, res) => {
+app.get("/alive", (req, res) => {
   res.json({ alive: true });
 });
 
@@ -37,6 +41,7 @@ app.post("/auth/google", async (req, res) => {
 
 app.get("/auth/google/get-token", async (req, res) => {
   if (!req.session.tokens) {
+    console.error("not authenticated");
     return res.status(401).json({ error: "Not authenticated" });
   }
 
@@ -53,4 +58,4 @@ app.get("/auth/google/get-token", async (req, res) => {
   res.json({ access_token: req.session.tokens.access_token });
 });
 
-app.listen(3001, () => console.log("Server is running on port 3001"));
+app.listen(port, () => console.log(`Server is running on port ${port}`));

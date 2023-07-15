@@ -1,5 +1,4 @@
 import moment from "moment";
-import { getAccessToken } from "../App";
 import { TimeRange } from "../eventsViews/LineChart";
 import {
   SleepSegment,
@@ -8,6 +7,7 @@ import {
   getRequestHeaders,
   getSleepData,
 } from "./dataRequestManager";
+import { getAccessToken } from "../Backend";
 
 export async function generateActivityInfo(
   timeRange: TimeRange

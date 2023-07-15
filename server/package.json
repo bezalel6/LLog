@@ -1,6 +1,6 @@
 {
   "name": "auth-server",
-  "description": "Cloud Functions for Firebase",
+  "description": "authentication server",
   "scripts": {
     "dev": "node index.js"
   },
@@ -11,6 +11,5 @@
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "google-auth-library": "^8.9.0"
-  },
-  "private": true
+  }
 }
