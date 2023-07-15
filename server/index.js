@@ -5,6 +5,7 @@ const cors = require("cors");
 const session = require("express-session");
 const port = process.env.PORT || 3030;
 const app = express();
+
 const oAuth2Client = new OAuth2Client(
   process.env.CLIENT_ID,
   process.env.CLIENT_SECRET,
@@ -12,7 +13,32 @@ const oAuth2Client = new OAuth2Client(
 );
 
 // app.use(cors({ credentials: true, origin: "*" }));
-app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
+// app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
+
+const allowedOrigins = ["http://localhost:5173", "https://llog-9e6bc.web.app/"];
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.get("Origin"));
+  res.header("Access-Control-Allow-Credentials", "true"); // Set to 'true' to allow credentials
+  // Other CORS headers if needed
+  next();
+});
+// Rest of your server code
+
+app.use(
+  cors({
+    credentials: true,
+    origin: function (origin, callback) {
+      console.log("got origin", origin);
+      if (!origin || allowedOrigins.find((o) => o.includes(origin))) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+  })
+);
+
 app.use(express.json());
 // app.use((req, res, next) => {
 //   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
@@ -33,10 +59,15 @@ app.get("/alive", (req, res) => {
 });
 
 app.post("/auth/google", async (req, res) => {
-  const { tokens } = await oAuth2Client.getToken(req.body.code); // Exchange code for tokens
-  console.log(tokens);
-  req.session.tokens = tokens; // Save tokens in session
-  res.json(tokens);
+  try {
+    const { tokens } = await oAuth2Client.getToken(req.body.code); // Exchange code for tokens
+    console.log(tokens);
+    req.session.tokens = tokens; // Save tokens in session
+    res.json(tokens);
+  } catch (e) {
+    console.error("error trying to get tokens. e=" + e);
+    return res.status(401).json({ error: e });
+  }
 });
 
 app.get("/auth/google/get-token", async (req, res) => {

@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const SERVER_PATH = "http://localhost:3030";
-const SERVER_PATH = "https://llog-auth-server.onrender.com";
+const SERVER_PATH = "http://localhost:3030";
+// const SERVER_PATH = "https://llog-auth-server.onrender.com";
 
 export async function alive(): Promise<boolean> {
   return axios
