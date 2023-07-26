@@ -8,6 +8,7 @@ import {
   collection,
   addDoc,
   serverTimestamp,
+  orderBy,
 } from "firebase/firestore";
 import { FirebaseContext, UserContext } from "./contexts";
 import "./EventCreator.css";
@@ -58,91 +59,7 @@ export class EventEmittor {
     this.listeners.forEach((l) => l());
   }
 }
-export function _EventCreator({ eventLogs }: EventCreatorProps) {
-  const convertedEvents = eventLogs.map(convertEventLogToGUI);
-  // console.log(convertedEvents);
-  const eventEmittor = useRef(new EventEmittor()).current;
-
-  const formData = useRef<GUIEventLog>({
-    amount: -1,
-    unit: " ",
-    event_type: " ",
-  }).current;
-
-  const defaultOptionValues: Array<Set<string>> = [];
-  const optionLabels: Map<number, string> = new Map();
-
-  const addOption = (event: null | GUIEventLog, key: string, i: number) => {
-    if (!defaultOptionValues[i]) defaultOptionValues[i] = new Set();
-    optionLabels.set(i, key);
-    if (event) defaultOptionValues[i].add(event[key] + "");
-  };
-  convertedEvents.forEach((convertedEvent) => {
-    Object.keys(convertedEvent).forEach((key, i) => {
-      addOption(convertedEvent, key, i);
-    });
-  });
-  if (!convertedEvents.length) {
-    // console.log("didnt get any events. generating dummy...");
-
-    const k: GUIEventLog = { amount: 0, unit: "", event_type: "" };
-    Object.keys(k).forEach((key, i) => {
-      addOption(null, key, i);
-    });
-  } else {
-    // console.log("got events.");
-  }
-
-  // const firebase = useContext(FirebaseContext)!;
-  // const user = useContext(UserContext)!;
-
-  const onSubmit = async (e: any) => {
-    e.preventDefault();
-    // fff
-    // addEventToDB(formData);
-  };
-
-  const makeOnSelectionFunc = (dropdownIndex: number) => {
-    return (selected: string, _: number) => {
-      // debugger;
-      function k(i: number) {
-        return Object.keys(formData)[i];
-      }
-      const key = k(dropdownIndex);
-      // console.log("key", key, "val", selected);
-      if (isNumber(formData[key])) formData[key] = Number(selected);
-      else formData[key] = selected;
-      // console.log("set val", formData[key]);
-    };
-  };
-
-  // for (let i = 0; i < optionLabels.size; i++) {
-  //   console.log(optionLabels.get(i), defaultOptionValues[i]);
-  // }
-  // console.log(optionsForOptions);
-  return (
-    <>
-      <form onSubmit={onSubmit}>
-        <div className="container flex-row dropdowns">
-          {defaultOptionValues.map((options, index) => {
-            return (
-              <Dropdown
-                eventEmittor={eventEmittor}
-                customInput={true}
-                label={formatLabelStr(optionLabels.get(index))}
-                key={index}
-                onSelected={makeOnSelectionFunc(index)}
-                options={[...options]}
-              ></Dropdown>
-            );
-          })}
-        </div>
-        <br />
-        <button type="submit">Send</button>
-      </form>
-    </>
-  );
-}
+//
 type EventCreatorState = GUIEventLog;
 class PRE_CONTEXT_EventCreator extends React.Component<
   EventCreatorProps & {
@@ -174,11 +91,23 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       };
       const key = k(dropdownIndex);
       // console.log("key", key, "val", selected);
-      if (isNumber(this.state[key])) this.state[key] = Number(selected);
-      else this.state[key] = selected;
+      this.setState((current) => {
+        const cp = { ...current };
+        if (isNumber(cp[key])) cp[key] = Number(selected);
+        else cp[key] = selected;
+        return cp;
+      });
+
       // console.log("set val", formData[key]);
     };
   };
+  // fixEvents() {
+  //   const user = this.props.userContext;
+  //   const db = getFirestore(this.props.firebaseContext);
+
+  //   const eventsRef = collection(db, "events");
+  //   colle;
+  // }
   addEventToDB = async (eventData: GUIEventLog) => {
     console.log("submitting", eventData);
     // const firebase = useContext(FirebaseContext)!;
@@ -193,19 +122,31 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       console.error("values not valid");
       return;
     }
-    await addDoc(eventsRef, doc)
-      .then(() => {
-        console.log("succesfully added " + eventData.event_type);
-        this.emittor.emit();
-      })
-      .catch((e) => {
-        console.error("error" + e + "occured using:" + eventData);
-        alert("error writing to the db: " + e);
-      });
+    const q = prompt("do you want to add this to the DB?", "y");
+    const didApprove = q === "y";
+    const laterActions = () => {
+      const s = didApprove ? "" : "---DEMO---";
+      console.log("succesfully added " + eventData.event_type + s);
+      this.emittor.emit();
+    };
+    if (didApprove) {
+      await addDoc(eventsRef, doc)
+        .then(() => {
+          laterActions();
+        })
+        .catch((e) => {
+          console.error("error" + e + "occured using:" + eventData);
+          alert("error writing to the db: " + e);
+        });
+    } else {
+      laterActions();
+    }
   };
   render() {
     GlobalAddEventToDB = this.addEventToDB;
+    // debugger;
     const convertedEvents = this.props.eventLogs.map(convertEventLogToGUI);
+
     // console.log(convertedEvents);
 
     const defaultOptionValues: Array<Set<string>> = [];
@@ -226,8 +167,9 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       Object.keys(k).forEach((key, i) => {
         addOption(null, key, i);
       });
-    } else {
     }
+    //  else {
+    // }
     return (
       <>
         <form onSubmit={this.onSubmit}>

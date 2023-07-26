@@ -27,7 +27,7 @@ export function Event({ event }: EventProps) {
   // timestamp
   return (
     <div className="event">
-      {/* <pre>{JSON.stringify(event)}</pre> */}
+      <pre>{JSON.stringify(event)}</pre>
       <div className="top">
         <div className="event-type">{formatLabelStr(event.event_type)}</div>
         <TimeSince date={timestamp}></TimeSince>

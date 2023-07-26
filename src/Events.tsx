@@ -32,6 +32,8 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
   const [snapshot] = useCollection(q);
 
   const _events: EventLog[] = snapshot?.docs.map((doc) => {
+    console.log("doc data", doc.data());
+
     const data = doc.data() as PrimitiveEventLog;
     if (!data.createdAt) return null;
     // console.log("new data", data);
