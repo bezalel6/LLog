@@ -11,6 +11,7 @@ import {
   where,
   getDocs,
   orderBy,
+  limit,
 } from "firebase/firestore";
 import { EventLog, PrimitiveEventLog } from "./Event";
 

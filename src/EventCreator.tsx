@@ -75,8 +75,8 @@ class PRE_CONTEXT_EventCreator extends React.Component<
     super(props);
     this.state = {
       amount: -1,
-      event_type: "--",
       unit: "--",
+      event_type: "--",
     };
   }
   onSubmit = async (e: any) => {
@@ -90,7 +90,7 @@ class PRE_CONTEXT_EventCreator extends React.Component<
         return Object.keys(this.state)[i];
       };
       const key = k(dropdownIndex);
-      // console.log("key", key, "val", selected);
+      // console.log("dropdown index", dropdownIndex, "key", key, "val", selected);
       this.setState((current) => {
         const cp = { ...current };
         if (isNumber(cp[key])) cp[key] = Number(selected);

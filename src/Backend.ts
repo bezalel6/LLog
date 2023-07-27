@@ -13,10 +13,14 @@ export async function alive(): Promise<boolean> {
     });
 }
 
+export async function logout() {
+  return axios.post(`${SERVER_PATH}/auth/logout`);
+}
 export async function signIn(code: string): Promise<AuthenticationData> {
-  return axios
-    .post(`${SERVER_PATH}/auth/google`, { code }, { withCredentials: true })
-    .then((r) => r.data);
+  return axios.post(`${SERVER_PATH}/auth/google`, { code }).then((r) => r.data);
+}
+export async function getCredentials() {
+  return axios.get(`${SERVER_PATH}/auth/credentials`).then((r) => r.data);
 }
 export async function getAccessToken() {
   try {

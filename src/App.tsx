@@ -27,19 +27,10 @@ import {
 } from "./utils/dataRequestManager";
 
 import axios, { AxiosError } from "axios";
-import {
-  GoogleLogin,
-  GoogleOAuthProvider,
-  TokenResponse,
-  // GoogleOAuthProvider,
-  googleLogout,
-  hasGrantedAllScopesGoogle,
-  useGoogleLogin,
-  useGoogleOneTapLogin,
-} from "@react-oauth/google";
-import { alive, signIn } from "./Backend";
-import jwtDecode from "jwt-decode";
+
+import { alive, getCredentials, logout, signIn } from "./Backend";
 import { GitModule } from "@faker-js/faker";
+import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 
 const app = firebase.initializeApp({
   apiKey: "AIzaSyBv8K7EfFbjG0Bb_Ji7_bQirZ1LXaK7ylw",
@@ -74,6 +65,7 @@ const App: FC = () => {
       })
       .catch((e) => console.error("error logging into firebase " + e));
   };
+
   React.useEffect(() => {
     async function au() {
       await firebase
@@ -134,58 +126,36 @@ export const scopes = [
   "https://www.googleapis.com/auth/fitness.sleep.write",
 ];
 const SignIn: FC = () => {
-  // return (
-  //   <GoogleLogin
-  //     onSuccess={(res) => {
-  //       console.log(res);
-  //     }}
-  //     onError={() => {
-  //       console.error("err");
-  //     }}
-  //   ></GoogleLogin>
-  // );
-  const authContext = useContext(GoogleAuthContext);
-
-  // useGoogleOneTapLogin({
-  //   onSuccess: async (res) => {
-  //     console.log("succ", res);
-  //     authContext.setAuth(res.credential);
-  //     // const data = await signIn(code);
-
-  //     // setAccessToken(tokens)
-  //     // console.log(tokens);
-  //   },
-  //   onError: () => {
-  //     console.error("err");
-  //   },
-
-  // });
+  const setAuth = useContext(GoogleAuthContext).setAuth;
+  type BackendLogin = "loading" | "not logged in" | { accessToken: string };
+  const [backendLoggedIn, setBackendLoggedIn] = useState<BackendLogin>();
+  getCredentials().then((res) => {
+    if (res.error) {
+      setBackendLoggedIn("not logged in");
+    } else {
+      setBackendLoggedIn(res.access_token);
+      setAuth({ access_token: res.access_token });
+    }
+  });
   const googleLogin = useGoogleLogin({
-    onSuccess: (res) => {
-      console.log("succ", res);
-      authContext.setAuth(res);
+    flow: "auth-code",
+    onSuccess: async (codeResponse) => {
+      const tokens = await signIn(codeResponse.code);
+      console.log({ tokens });
+      setAuth({ access_token: tokens.access_token });
     },
     onError(errorResponse) {
       console.error(errorResponse);
     },
-
-    scope: scopes.join(" "),
-    flow: "implicit",
   });
 
   return (
-    <>
-      {/* <GoogleLogin
-        locale="he-il"
-        onSuccess={(res) => {
-          authContext.setAuth(res.credential);
-        }}
-        onError={() => console.error("login failed")}
-        useOneTap
-        auto_select
-      ></GoogleLogin> */}
-      <button onClick={() => googleLogin()}>Sign In With Google</button>
-    </>
+    <div>
+      {backendLoggedIn === "loading" && <h4>Loading...</h4>}
+      {backendLoggedIn === "not logged in" && (
+        <button onClick={googleLogin}>login</button>
+      )}
+    </div>
   );
 };
 function err(e: any) {
@@ -226,9 +196,11 @@ export function catchErr(e: any) {
   }
 }
 
-const signOut = () => {
-  googleLogout();
-  firebase.auth().signOut().then(location.reload);
+const signOut = async () => {
+  // googleLogout();
+  await logout();
+  await firebase.auth().signOut();
+  location.reload();
 };
 const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
   return (
@@ -244,11 +216,29 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   useEffect(() => {
     checkEventInParams(GlobalAddEventToDB);
   }, []);
+  // const fixME = async () => {
+  //   const db = firebase.firestore();
+  //   const ref = db.collection("events");
+  //   let fixed = 0;
+  //   ref.get().then((querySnapshot) => {
+  //     querySnapshot.forEach(async (doc) => {
+  //       console.log(doc.id, "=>", doc.data());
+  //       const data = doc.data() as EventLog;
+  //       if (data.event_type == "mg") {
+  //         await ref.doc(doc.id).update({
+  //           event_type: data.units,
+  //           units: "mg",
+  //         });
+  //         console.log(++fixed);
+  //       }
+  //     });
+  //   });
+  // };
   return (
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>
         <SignOut user={user} />
-
+        {/* <button onClick={fixME}>fixme</button> */}
         <Events currentLogs={eventLogs} setEventLogs={setEventLogs}></Events>
         <EventCreator eventLogs={eventLogs}></EventCreator>
       </UserContext.Provider>
