@@ -1,5 +1,5 @@
 import React, { useContext, useRef } from "react";
-import Dropdown from "./components/Dropdown";
+import Dropdown from "./components/Dropdown/Dropdown";
 import { EventLog, PrimitiveEventLog } from "./Event";
 import { formatLabelStr, isNumber } from "./utils/utils";
 import {

@@ -3,7 +3,7 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FirebaseContext, GoogleAuthContext, UserContext } from "./contexts";
 import { useCollection } from "react-firebase-hooks/firestore";
-import Selection from "./components/SelectionButtons";
+import Selection from "./components/SelectionButtons/SelectionButtons";
 import {
   getFirestore,
   collection,
@@ -33,7 +33,7 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
   const [snapshot] = useCollection(q);
 
   const _events: EventLog[] = snapshot?.docs.map((doc) => {
-    console.log("doc data", doc.data());
+    // console.log("doc data", doc.data());
 
     const data = doc.data() as PrimitiveEventLog;
     if (!data.createdAt) return null;
@@ -50,13 +50,9 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
 
     return e;
   });
-  // const events = (_events ? _events.filter((o) => !!o) : []).map((e) => {
-  //   return sortKeys(e);
-  // });
   const events = (_events ? _events.filter((o) => !!o) : []).map((e) => {
     return e;
   });
-  // console.log(events);
 
   // inside Events component
   useEffect(() => {
@@ -71,10 +67,6 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
   const [currentViewStyle, setCurrentViewStyle] = useState(EventViewStyle.List);
   return (
     <div className="events">
-      {/* <ViewStyleSelector
-        currentViewStyle={currentViewStyle}
-        setViewStyle={setCurrentViewStyle}
-      ></ViewStyleSelector> */}
       <Selection<EventViewStyle>
         currentValue={currentViewStyle}
         enumV={EventViewStyle}
@@ -94,7 +86,7 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
 }
 
 export enum EventViewStyle {
-  BarChart,
+  // BarChart,
   LineChart,
   List,
 }

@@ -19,7 +19,7 @@ import {
 } from "chart.js";
 import { Chart, Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
-import Selection from "../components/SelectionButtons";
+import Selection from "../components/SelectionButtons/SelectionButtons";
 import moment from "moment";
 import { generateActivityInfo, generateSleepInfo } from "../utils/activities";
 import { catchErr } from "../App";

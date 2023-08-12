@@ -20,13 +20,7 @@
 .input-container {
     position: relative;
 }
-.reset-input {
-    position: absolute;
-    z-index: 1;
-    right: 0;
-    bottom: 0;
-    background-color: transparent;
-}
+
 .dropdown_custom {
     /* background-color: gray; */
 }

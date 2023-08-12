@@ -1,6 +1,7 @@
 import { Component, createRef } from "react";
 import "./Dropdown.css";
-import { EventEmittor } from "../EventCreator";
+import { EventEmittor } from "../../EventCreator";
+import ClearValue from "../ClearValue/ClearValue";
 
 export interface DropdownProps<T = string> {
   label?: string;
@@ -148,6 +149,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
     this.inputRef.current.value = "";
     this.inputRef.current.onkeyup(null);
   };
+  // todo add "Custom" option to each dropdown and only show dropdown when its selected
   render() {
     const { isActive } = this.state;
     const { options } = this.props;
@@ -184,12 +186,7 @@ export default class Dropdown extends Component<DropdownProps, DropdownState> {
               type="text"
               ref={this.inputRef}
             />
-            <input
-              onClick={this.onInputReset}
-              className="reset-input"
-              type="button"
-              value="X"
-            ></input>
+            <ClearValue onClear={this.onInputReset} value={"X"}></ClearValue>
           </div>
         )}
       </div>

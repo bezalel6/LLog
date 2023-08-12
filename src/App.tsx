@@ -68,9 +68,7 @@ const App: FC = () => {
 
   React.useEffect(() => {
     async function au() {
-      await firebase
-        .auth()
-        .setPersistence(firebase.auth.Auth.Persistence.SESSION);
+      await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
       const unsubscribe = auth.onAuthStateChanged((user) => {
         setUser(user);
       });

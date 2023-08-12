@@ -24,12 +24,10 @@ export async function getCredentials() {
 }
 export async function getAccessToken() {
   try {
-    console.time("access-token");
     return axios
       .get(`${SERVER_PATH}/auth/google/get-token`, { withCredentials: true })
       .then((res) => res.data.access_token);
   } finally {
-    console.timeEnd("access-token");
   }
 }
 
