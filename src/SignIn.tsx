@@ -13,6 +13,7 @@ import {
 import PropTypes from "prop-types";
 import { Component } from "react";
 import { scopes } from "./App";
+import firebase from "firebase/compat/app";
 export function makeProvider() {
   const provider = new GoogleAuthProvider();
   for (let i = 0; i < scopes.length; i++) {
@@ -20,7 +21,65 @@ export function makeProvider() {
   }
   return provider;
 }
+export const signOut = async () => {
+  // googleLogout();
+  await Auth.logout();
+  if (window.google && window.google.accounts) {
+    window.google.accounts.id.disableAutoSelect();
+    window.google.accounts.id.revoke(
+      localStorage.getItem("credential"),
+      function () {
+        console.log("User signed out.");
+      }
+    );
+    await firebase.auth().signOut();
+    // location.reload();
+  }
+};
+export const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
+  return (
+    <div className="sign-out">
+      <p>Hello {user.displayName}</p>
+      <a onClick={signOut}>Sign out</a>
+    </div>
+  );
+};
+
 export function SignIn() {
+  const setAuth = useContext(GoogleAuthContext).setAuth;
+  const onCredentialResponse = (res: any) => {
+    setAuth({ access_token: res.credential });
+    console.log(res);
+
+    // const googleProvider = GoogleAuthProvider.credential(res.clientId,res.credential);
+  };
+  window.onCredentialResponse = onCredentialResponse;
+  return (
+    <>
+      <div
+        id="g_id_onload"
+        data-client_id="240965235389-hd2ri2pl0afb9874r4vvd2ot24ednf9q.apps.googleusercontent.com"
+        data-context="signin"
+        data-ux_mode="popup"
+        data-callback="onCredentialResponse"
+        data-auto_select="true"
+        data-itp_support="true"
+        data-scope={scopes.join(" ")}
+      ></div>
+
+      <div
+        className="g_id_signin"
+        data-type="standard"
+        data-shape="rectangular"
+        data-theme="outline"
+        data-text="signin_with"
+        data-size="large"
+        data-logo_alignment="left"
+      ></div>
+    </>
+  );
+}
+export function _SignIn() {
   const setAuth = useContext(GoogleAuthContext).setAuth;
   // scopes.forEach();
   const signIn = async () => {
@@ -57,64 +116,3 @@ export function SignIn() {
     </div>
   );
 }
-import { useEffect } from "react";
-
-export const MyComponent: React.FC = () => {
-  const handleCredentialResponse = (response: any) => {
-    console.log(response);
-
-    // Handle the response here, such as sending it to your backend for verification
-  };
-
-  useEffect(() => {
-    window.google.accounts.id.initialize({
-      client_id: import.meta.env.VITE_GCP_CLIENT_ID_T,
-      callback: handleCredentialResponse,
-    });
-    window.google.accounts.id.prompt(); // This will display the One Tap sign-in prompt
-  }, []);
-
-  return <div>{/* Your component JSX here */}</div>;
-};
-
-export default MyComponent;
-
-export const _SignIn: FC = () => {
-  const setAuth = useContext(GoogleAuthContext).setAuth;
-  type BackendLogin = "loading" | { accessToken: string } | { error: string };
-  const [backendLoggedIn, setBackendLoggedIn] =
-    useState<BackendLogin>("loading");
-  Auth.getCredentials()
-    .then((res) => {
-      setBackendLoggedIn("loading");
-      setAuth({ access_token: res.access_token });
-    })
-    .catch((reason) => setBackendLoggedIn({ error: reason }));
-
-  const googleLogin = useGoogleLogin({
-    flow: "auth-code",
-    onSuccess: async (codeResponse) => {
-      const tokens = await Auth.signIn(codeResponse.code);
-      console.log({ tokens });
-      setAuth({ access_token: tokens.access_token });
-    },
-    onError(errorResponse) {
-      console.error(errorResponse);
-    },
-  });
-
-  return (
-    <div>
-      {backendLoggedIn === "loading" ? (
-        <h4>Loading...</h4>
-      ) : (
-        backendLoggedIn["error"] && (
-          <>
-            <h3>{backendLoggedIn["error"]}</h3>
-            <button onClick={googleLogin}>Login</button>
-          </>
-        )
-      )}
-    </div>
-  );
-};

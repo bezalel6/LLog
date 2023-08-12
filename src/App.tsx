@@ -32,7 +32,7 @@ import { AuthenticationData } from "./Auth";
 import Auth from "./Auth";
 import { GitModule } from "@faker-js/faker";
 import { GoogleOAuthProvider, useGoogleOneTapLogin } from "@react-oauth/google";
-import MyComponent, { SignIn, makeProvider } from "./SignIn";
+import { SignIn, SignOut, makeProvider, signOut } from "./SignIn";
 import {
   GoogleAuthProvider,
   getAdditionalUserInfo,
@@ -88,19 +88,19 @@ const App: FC = () => {
   );
   const [googleAuth, setGoogleAuth] = React.useState<GoogleAuthType>(null);
   const setAuth = (token: GoogleAuthType) => {
-    setGoogleAuth(token);
-    // const credential = firebase.auth.GoogleAuthProvider.credential(
-    //   null,
-    //   token.access_token
-    // );
-    // firebase
-    //   .auth()
-    //   .signInWithCredential(credential)
-    //   .then(() => {
-    //     console.log("successfully logged into firebase");
-    //     // hasGrantedAllScopesGoogle();
-    //   })
-    //   .catch((e) => console.error("error logging into firebase " + e));
+    const credential = firebase.auth.GoogleAuthProvider.credential(
+      // null,
+      token.access_token
+    );
+    firebase
+      .auth()
+      .signInWithCredential(credential)
+      .then(() => {
+        setGoogleAuth(token);
+        console.log("successfully logged into firebase");
+        // hasGrantedAllScopesGoogle();
+      })
+      .catch((e) => console.error("error logging into firebase " + e));
   };
   //tocheck: if the google token expired, theres a chance firebase wouldnt know the persistence is NONE before it calls
   //firebase.auth().onAuthStateChanged((user) => {...
@@ -129,16 +129,8 @@ const App: FC = () => {
               ) : user ? (
                 <LoggedIn user={user} />
               ) : (
-                // <SignIn />
+                <SignIn />
                 // <MyComponent></MyComponent>
-                <div
-                  id="g_id_onload"
-                  data-client_id="240965235389-hd2ri2pl0afb9874r4vvd2ot24ednf9q.apps.googleusercontent.com"
-                  data-context="signin"
-                  data-callback="onRes"
-                  data-auto_select="true"
-                  data-itp_support="true"
-                ></div>
               )}
             </GoogleAuthContext.Provider>
           </GoogleOAuthProvider>
@@ -156,10 +148,7 @@ const App: FC = () => {
     </div>
   );
 };
-function onRes(res) {
-  console.log(res);
-}
-window.onRes = onRes;
+
 function err(e: any) {
   console.error(e);
 }
@@ -198,21 +187,6 @@ export function catchErr(e: any) {
   }
 }
 
-const signOut = async () => {
-  // googleLogout();
-  await Auth.logout();
-  await firebase.auth().signOut();
-  // location.reload();
-};
-const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
-  return (
-    <div className="sign-out">
-      <p>Hello {user.displayName}</p>
-      <a onClick={signOut}>Sign out</a>
-    </div>
-  );
-};
-
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
   const [showEvents, setShowEvents] = useState(false);
@@ -239,43 +213,11 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   //     });
   //   });
   // };
-  const func = async () => {
-    const provider = makeProvider();
-    const auth = getAuth();
-    let res = await getRedirectResult(auth);
-    if (!res) res = await signInWithRedirect(auth, provider);
-    getRedirectResult(auth)
-      .then((result) => {
-        console.log("got redirect result:", result);
 
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential.accessToken;
-        setAuth({ access_token: token });
-        // The signed-in user info.
-        // const user = ;
-        // IdP data available using getAdditionalUserInfo(result)
-        console.log(getAdditionalUserInfo(result));
-      })
-      .catch((error) => {
-        // Handle Errors here.
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // The email of the user's account used.
-        // const email = error.customData.email;
-        // The AuthCredential type that was used.
-        const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
-        console.log({ error, errorCode, errorMessage, credential });
-      });
-  };
-  useEffect(() => {
-    func();
-  }, []);
   return (
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>
         <div className="inline-children">
-          <button onClick={func}>Test Google Token</button>
           <button onClick={() => setShowEvents((s) => !s)}>
             Toggle Events
           </button>

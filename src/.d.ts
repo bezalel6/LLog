@@ -2,8 +2,7 @@
 export {}; // This ensures this is an ES6 module
 declare global {
   interface Window {
-    gapi: any;
     google: any;
-    onRes: (res: any) => void;
+    onCredentialResponse: (res: any) => void;
   }
 }

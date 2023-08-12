@@ -26,7 +26,7 @@ const dataValues = [
 // Provide request headers to be attached with each function call
 export const getRequestHeaders = (accessToken: string) => {
   if (!accessToken) debugger;
-  // console.log("creating request headers with access token:", accessToken);
+  console.log("creating request headers with access token:", accessToken);
   const requestHeaderBody = {
     params: {
       key: import.meta.env.VITE_GCP_API_KEY,
