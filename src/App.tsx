@@ -77,11 +77,21 @@ const app = firebase.initializeApp({
   measurementId: "G-1WTVS2RTGR",
 });
 // axios.defaults.withCredentials = true;
-
+function timeout(num: number) {
+  return new Promise((res, rej) => {
+    setTimeout(res, num);
+  });
+}
 const App: FC = () => {
+  const [connectedToBackend, setConnectedToBackend] = useState<null | boolean>(
+    false
+  );
+  timeout(500).then(() => setConnectedToBackend(true));
+  // Auth.alive().then(setConnectedToBackend);
   const [user, setUser] = React.useState<firebase.User | null | "initializing">(
     "initializing"
   );
+
   const [googleAuth, setGoogleAuth] = React.useState<GoogleAuthType>(null);
   const setAuth = (token: GoogleAuthType) => {
     const credential = firebase.auth.GoogleAuthProvider.credential(
@@ -114,20 +124,28 @@ const App: FC = () => {
 
   return (
     <div className="App">
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
-        <GoogleAuthContext.Provider
-          value={{ auth: googleAuth, setAuth: setAuth }}
-        >
-          {user === "initializing" ? (
-            "Initializing..."
-          ) : user ? (
-            <LoggedIn user={user} />
-          ) : (
-            <SignIn />
-            // <MyComponent></MyComponent>
-          )}
-        </GoogleAuthContext.Provider>
-      </GoogleOAuthProvider>
+      {connectedToBackend ? (
+        <>
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID}>
+            <GoogleAuthContext.Provider
+              value={{ auth: googleAuth, setAuth: setAuth }}
+            >
+              {user === "initializing" ? (
+                "Initializing..."
+              ) : user ? (
+                <LoggedIn user={user} />
+              ) : (
+                // <SignIn />
+                <MyComponent></MyComponent>
+              )}
+            </GoogleAuthContext.Provider>
+          </GoogleOAuthProvider>
+        </>
+      ) : connectedToBackend === null ? (
+        <h3>Connecting to backend...</h3>
+      ) : (
+        <h3 className="error">Couldnt connect to the backend</h3>
+      )}
       <div className="footer">
         <a href="https://www.freeprivacypolicy.com/live/181543f2-ce03-4f06-8f10-494b6416e31f">
           Privacy Policy
@@ -174,6 +192,35 @@ export function catchErr(e: any) {
     }
   }
 }
+
+const MyComponent: React.FC = () => {
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+  // setTimeout(() => {
+  //   setScriptLoaded(true);
+  //   console.log("loadeds");
+  // }, 1000);
+  // useEffect(() => {
+  //   const scripts = document.querySelectorAll("script");
+  //   let script: HTMLScriptElement;
+  //   scripts.forEach((s) => {
+  //     if (s.src === "https://accounts.google.com/gsi/client") script = s;
+  //   });
+  //   // const script =
+  //   console.log(script);
+
+  //   script.onload = () => {
+  //     console.log("loaded");
+  //     setScriptLoaded(true);
+  //   };
+  //   // if(script.)
+  // }, []);
+
+  // if (!scriptLoaded) {
+  //   return <div>Loading...</div>; // You can customize this part
+  // }
+
+  return <SignIn></SignIn>;
+};
 
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);

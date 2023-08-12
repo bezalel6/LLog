@@ -54,19 +54,20 @@ export function SignIn() {
     // const googleProvider = GoogleAuthProvider.credential(res.clientId,res.credential);
   };
   window.onCredentialResponse = onCredentialResponse;
+
   return (
     <>
       <div
         id="g_id_onload"
-        data-client_id="240965235389-hd2ri2pl0afb9874r4vvd2ot24ednf9q.apps.googleusercontent.com"
+        data-client_id="240965235389-iv21jhu3th9bbkb6p8hrugrips2pgh5e.apps.googleusercontent.com"
         data-context="signin"
         data-ux_mode="popup"
         data-callback="onCredentialResponse"
-        data-auto_select="true"
-        data-itp_support="true"
+        // data-auto_select="true"
+        // data-itp_support="true"
         data-scope={scopes.join(" ")}
       ></div>
-
+      {/* 
       <div
         className="g_id_signin"
         data-type="standard"
@@ -75,7 +76,7 @@ export function SignIn() {
         data-text="signin_with"
         data-size="large"
         data-logo_alignment="left"
-      ></div>
+      ></div> */}
     </>
   );
 }
