@@ -99,7 +99,7 @@ const App: FC = () => {
   const [googleAuth, setGoogleAuth] = React.useState<GoogleAuthType>(null);
   const setAuth = (token: GoogleAuthType) => {
     const credential = firebase.auth.GoogleAuthProvider.credential(
-      // null,
+      null,
       token.access_token
     );
     firebase

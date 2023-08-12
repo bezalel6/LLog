@@ -50,17 +50,21 @@ export const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
 // }
 export function SignIn() {
   const setAuth = useContext(GoogleAuthContext).setAuth;
-  const onCredentialResponse = (res: any) => {
-    setAuth({ access_token: res.credential });
-    console.log(res);
+  // const onCredentialResponse = (res: any) => {
+  //   setAuth({ access_token: res.credential });
+  //   console.log(res);
 
-    // const googleProvider = GoogleAuthProvider.credential(res.clientId,res.credential);
+  //   // const googleProvider = GoogleAuthProvider.credential(res.clientId,res.credential);
+  // };
+  // window.onCredentialResponse = onCredentialResponse;
+  const onClick = () => {
+    Auth.getCredentials().then((tokens) =>
+      setAuth({ access_token: tokens.access_token })
+    );
   };
-  window.onCredentialResponse = onCredentialResponse;
-
   return (
     <>
-      o boi
+      <button onClick={onClick}>login</button>
       {/* <div
         id="g_id_onload"
         data-client_id="240965235389-iv21jhu3th9bbkb6p8hrugrips2pgh5e.apps.googleusercontent.com"

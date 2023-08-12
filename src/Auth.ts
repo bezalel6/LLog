@@ -30,40 +30,9 @@ const Auth = {
   couldntLogIn(str: string = "") {
     return Promise.reject("not logged in " + str);
   },
-
-  async getCredentials() {
+  async getCredentials(): Promise<AuthenticationData> {
     try {
-      const cookie = Cookies.get(cookieName);
-      if (cookie) {
-        const authData = JSON.parse(cookie) as AuthenticationData;
-        if (Auth.isExpired(authData)) {
-          console.log("current token is expired. refreshing...", authData);
-          return axios
-            .post(`${SERVER_PATH}/refreshToken`, {
-              refreshToken: authData.refresh_token,
-            })
-            .then((r) => {
-              if (r.data.error) {
-                throw r.data.error;
-              }
-              console.log("got:", r);
-              const ret = r.data as AuthenticationData;
-              return ret;
-            })
-            .then(async (data) => {
-              const valid = await Auth.isValid(data.access_token);
-              if (valid) {
-                Cookies.set(cookieName, JSON.stringify(data));
-                return data;
-              } else {
-                return Auth.couldntLogIn();
-              }
-            });
-        }
-        return Promise.resolve(authData);
-      } else {
-        return Auth.couldntLogIn();
-      }
+      return oneTapSignInPrompt();
     } catch (e) {
       return Auth.couldntLogIn(e);
     }
@@ -90,18 +59,25 @@ const Auth = {
     }
   },
 };
-
-const google = window.google;
+const signInPromise: {
+  resolve?: (tokens: AuthenticationData) => void;
+  reject?: (reason?: string) => void;
+} = {};
 
 function oneTapSignInPrompt() {
+  const google = window.google;
   google.accounts.id.initialize({
-    client_id:
-      "240965235389-iv21jhu3th9bbkb6p8hrugrips2pgh5e.apps.googleusercontent.com",
+    client_id: import.meta.env.VITE_GCP_CLIENT_ID,
     callback: handleCredentialResponse,
     cancel_on_tap_outside: true,
     itp_support: true,
   });
   google.accounts.id.prompt();
+  const promise = new Promise<AuthenticationData>((res, rej) => {
+    signInPromise.resolve = res;
+    signInPromise.reject = rej;
+  });
+  return promise;
 }
 function handleCredentialResponse(response) {
   // One Tap Sign in returns a JWT token.
@@ -129,39 +105,16 @@ function parseJwt(token) {
   return JSON.parse(jsonPayload);
 } // This method request the oauth consent for the passed in google account.
 function oauthSignIn(googleId) {
-  // const scopes = [
-  //   "https://www.googleapis.com/auth/fitness.activity.read",
-  //   "https://www.googleapis.com/auth/fitness.activity.write",
-  //   "https://www.googleapis.com/auth/fitness.blood_glucose.read",
-  //   "https://www.googleapis.com/auth/fitness.blood_glucose.write",
-  //   "https://www.googleapis.com/auth/fitness.blood_pressure.read",
-  //   "https://www.googleapis.com/auth/fitness.blood_pressure.write",
-  //   "https://www.googleapis.com/auth/fitness.body.read",
-  //   "https://www.googleapis.com/auth/fitness.body.write",
-  //   "https://www.googleapis.com/auth/fitness.body_temperature.read",
-  //   "https://www.googleapis.com/auth/fitness.body_temperature.write",
-  //   "https://www.googleapis.com/auth/fitness.heart_rate.read",
-  //   "https://www.googleapis.com/auth/fitness.heart_rate.write",
-  //   "https://www.googleapis.com/auth/fitness.location.read",
-  //   "https://www.googleapis.com/auth/fitness.location.write",
-  //   "https://www.googleapis.com/auth/fitness.nutrition.read",
-  //   "https://www.googleapis.com/auth/fitness.nutrition.write",
-  //   "https://www.googleapis.com/auth/fitness.oxygen_saturation.read",
-  //   "https://www.googleapis.com/auth/fitness.oxygen_saturation.write",
-  //   "https://www.googleapis.com/auth/fitness.reproductive_health.read",
-  //   "https://www.googleapis.com/auth/fitness.reproductive_health.write",
-  //   "https://www.googleapis.com/auth/fitness.sleep.read",
-  //   "https://www.googleapis.com/auth/fitness.sleep.write",
-  // ];
+  const google = window.google;
   const client = google.accounts.oauth2.initTokenClient({
-    client_id:
-      "240965235389-iv21jhu3th9bbkb6p8hrugrips2pgh5e.apps.googleusercontent.com",
+    client_id: import.meta.env.VITE_GCP_CLIENT_ID,
     scope: scopes.join(" "),
     hint: googleId,
     prompt: "", // Specified as an empty string to auto select the account which we have already consented for use.
     callback: (tokenResponse) => {
       const access_token = tokenResponse.access_token;
       console.log(tokenResponse);
+      signInPromise.resolve(tokenResponse);
     },
   });
   client.requestAccessToken();

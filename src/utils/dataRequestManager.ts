@@ -139,7 +139,7 @@ const getSleepSessions = async (
       ).toISOString()}&endTime=${new Date(
         endTime
       ).toISOString()}&activityType=72`,
-      { ...headers, withCredentials: true }
+      makeConfig(headers)
     )
     .catch((e) => {
       catchErr(e);
