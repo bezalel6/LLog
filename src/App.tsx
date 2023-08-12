@@ -1,6 +1,6 @@
 /* eslint-disable no-inner-declarations */
 import "./App.css";
-import React, { FC, useEffect, useRef, useState } from "react";
+import React, { FC, useContext, useEffect, useRef, useState } from "react";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/messaging";
@@ -32,88 +32,16 @@ import { AuthenticationData } from "./Auth";
 import Auth from "./Auth";
 import { GitModule } from "@faker-js/faker";
 import { GoogleOAuthProvider, useGoogleOneTapLogin } from "@react-oauth/google";
-import { SignIn } from "./SignIn";
+import MyComponent, { SignIn, makeProvider } from "./SignIn";
+import {
+  GoogleAuthProvider,
+  getAdditionalUserInfo,
+  getAuth,
+  getRedirectResult,
+  signInWithRedirect,
+} from "firebase/auth";
+import jwtDecode from "jwt-decode";
 
-const app = firebase.initializeApp({
-  apiKey: "AIzaSyBv8K7EfFbjG0Bb_Ji7_bQirZ1LXaK7ylw",
-  authDomain: "llog-9e6bc.firebaseapp.com",
-  projectId: "llog-9e6bc",
-  storageBucket: "llog-9e6bc.appspot.com",
-  messagingSenderId: "240965235389",
-  appId: "1:240965235389:web:e580f88807edc926227dd4",
-  measurementId: "G-1WTVS2RTGR",
-});
-// axios.defaults.withCredentials = true;
-
-const App: FC = () => {
-  const [connectedToBackend, setConnectedToBackend] = useState<null | boolean>(
-    null
-  );
-  Auth.alive().then(setConnectedToBackend);
-  const [user, setUser] = React.useState<firebase.User | null | "initializing">(
-    "initializing"
-  );
-  const [googleAuth, setGoogleAuth] = React.useState<GoogleAuthType>(null);
-  const setAuth = (token: GoogleAuthType) => {
-    const credential = firebase.auth.GoogleAuthProvider.credential(
-      null,
-      token.access_token
-    );
-    firebase
-      .auth()
-      .signInWithCredential(credential)
-      .then(() => {
-        console.log("successfully logged into firebase");
-        // hasGrantedAllScopesGoogle();
-        setGoogleAuth(token);
-      })
-      .catch((e) => console.error("error logging into firebase " + e));
-  };
-  //tocheck: if the google token expired, theres a chance firebase wouldnt know the persistence is NONE before it calls
-  //firebase.auth().onAuthStateChanged((user) => {...
-  React.useEffect(() => {
-    function au() {
-      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
-      const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-        setUser(user);
-      });
-      return unsubscribe;
-    }
-    return au();
-  }, []);
-  console.log(user);
-
-  return (
-    <div className="App">
-      {connectedToBackend ? (
-        <>
-          <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
-            <GoogleAuthContext.Provider
-              value={{ auth: googleAuth, setAuth: setAuth }}
-            >
-              {user === "initializing" ? (
-                "Initializing..."
-              ) : user ? (
-                <LoggedIn user={user} />
-              ) : (
-                <SignIn />
-              )}
-            </GoogleAuthContext.Provider>
-          </GoogleOAuthProvider>
-        </>
-      ) : connectedToBackend === null ? (
-        <h3>Connecting to backend...</h3>
-      ) : (
-        <h3 className="error">Couldnt connect to the backend</h3>
-      )}
-      <div className="footer">
-        <a href="https://www.freeprivacypolicy.com/live/181543f2-ce03-4f06-8f10-494b6416e31f">
-          Privacy Policy
-        </a>
-      </div>
-    </div>
-  );
-};
 export const scopes = [
   "https://www.googleapis.com/auth/fitness.activity.read",
   "https://www.googleapis.com/auth/fitness.activity.write",
@@ -138,6 +66,100 @@ export const scopes = [
   "https://www.googleapis.com/auth/fitness.sleep.read",
   "https://www.googleapis.com/auth/fitness.sleep.write",
 ];
+
+const app = firebase.initializeApp({
+  apiKey: "AIzaSyBv8K7EfFbjG0Bb_Ji7_bQirZ1LXaK7ylw",
+  authDomain: "llog-9e6bc.firebaseapp.com",
+  projectId: "llog-9e6bc",
+  storageBucket: "llog-9e6bc.appspot.com",
+  messagingSenderId: "240965235389",
+  appId: "1:240965235389:web:e580f88807edc926227dd4",
+  measurementId: "G-1WTVS2RTGR",
+});
+// axios.defaults.withCredentials = true;
+
+const App: FC = () => {
+  const [connectedToBackend, setConnectedToBackend] = useState<null | boolean>(
+    null
+  );
+  Auth.alive().then(setConnectedToBackend);
+  const [user, setUser] = React.useState<firebase.User | null | "initializing">(
+    "initializing"
+  );
+  const [googleAuth, setGoogleAuth] = React.useState<GoogleAuthType>(null);
+  const setAuth = (token: GoogleAuthType) => {
+    setGoogleAuth(token);
+    // const credential = firebase.auth.GoogleAuthProvider.credential(
+    //   null,
+    //   token.access_token
+    // );
+    // firebase
+    //   .auth()
+    //   .signInWithCredential(credential)
+    //   .then(() => {
+    //     console.log("successfully logged into firebase");
+    //     // hasGrantedAllScopesGoogle();
+    //   })
+    //   .catch((e) => console.error("error logging into firebase " + e));
+  };
+  //tocheck: if the google token expired, theres a chance firebase wouldnt know the persistence is NONE before it calls
+  //firebase.auth().onAuthStateChanged((user) => {...
+  React.useEffect(() => {
+    function au() {
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+      const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+        setUser(user);
+      });
+      return unsubscribe;
+    }
+    return au();
+  }, []);
+  console.log({ user });
+
+  return (
+    <div className="App">
+      {connectedToBackend ? (
+        <>
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
+            <GoogleAuthContext.Provider
+              value={{ auth: googleAuth, setAuth: setAuth }}
+            >
+              {user === "initializing" ? (
+                "Initializing..."
+              ) : user ? (
+                <LoggedIn user={user} />
+              ) : (
+                // <SignIn />
+                // <MyComponent></MyComponent>
+                <div
+                  id="g_id_onload"
+                  data-client_id="240965235389-hd2ri2pl0afb9874r4vvd2ot24ednf9q.apps.googleusercontent.com"
+                  data-context="signin"
+                  data-callback="onRes"
+                  data-auto_select="true"
+                  data-itp_support="true"
+                ></div>
+              )}
+            </GoogleAuthContext.Provider>
+          </GoogleOAuthProvider>
+        </>
+      ) : connectedToBackend === null ? (
+        <h3>Connecting to backend...</h3>
+      ) : (
+        <h3 className="error">Couldnt connect to the backend</h3>
+      )}
+      <div className="footer">
+        <a href="https://www.freeprivacypolicy.com/live/181543f2-ce03-4f06-8f10-494b6416e31f">
+          Privacy Policy
+        </a>
+      </div>
+    </div>
+  );
+};
+function onRes(res) {
+  console.log(res);
+}
+window.onRes = onRes;
 function err(e: any) {
   console.error(e);
 }
@@ -197,6 +219,8 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   useEffect(() => {
     checkEventInParams(GlobalAddEventToDB);
   }, []);
+  const setAuth = useContext(GoogleAuthContext).setAuth;
+
   // const fixME = async () => {
   //   const db = firebase.firestore();
   //   const ref = db.collection("events");
@@ -215,10 +239,43 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   //     });
   //   });
   // };
+  const func = async () => {
+    const provider = makeProvider();
+    const auth = getAuth();
+    let res = await getRedirectResult(auth);
+    if (!res) res = await signInWithRedirect(auth, provider);
+    getRedirectResult(auth)
+      .then((result) => {
+        console.log("got redirect result:", result);
+
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        setAuth({ access_token: token });
+        // The signed-in user info.
+        // const user = ;
+        // IdP data available using getAdditionalUserInfo(result)
+        console.log(getAdditionalUserInfo(result));
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        // const email = error.customData.email;
+        // The AuthCredential type that was used.
+        const credential = GoogleAuthProvider.credentialFromError(error);
+        // ...
+        console.log({ error, errorCode, errorMessage, credential });
+      });
+  };
+  useEffect(() => {
+    func();
+  }, []);
   return (
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>
         <div className="inline-children">
+          <button onClick={func}>Test Google Token</button>
           <button onClick={() => setShowEvents((s) => !s)}>
             Toggle Events
           </button>
