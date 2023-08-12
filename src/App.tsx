@@ -235,6 +235,7 @@ const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
 
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
+  const [showEvents, setShowEvents] = useState(false);
   useEffect(() => {
     checkEventInParams(GlobalAddEventToDB);
   }, []);
@@ -259,9 +260,15 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   return (
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>
-        <SignOut user={user} />
-        {/* <button onClick={fixME}>fixme</button> */}
-        <Events currentLogs={eventLogs} setEventLogs={setEventLogs}></Events>
+        <div className="inline-children">
+          <button onClick={() => setShowEvents((s) => !s)}>
+            Toggle Events
+          </button>
+          <SignOut user={user} />
+        </div>
+        {showEvents && (
+          <Events currentLogs={eventLogs} setEventLogs={setEventLogs}></Events>
+        )}
         <EventCreator eventLogs={eventLogs}></EventCreator>
       </UserContext.Provider>
     </FirebaseContext.Provider>

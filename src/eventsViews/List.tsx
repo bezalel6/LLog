@@ -11,8 +11,11 @@ import { Firestore, getFirestore } from "firebase/firestore";
 
 export default function List({ events }: { events: EventLog[] }) {
   const bottomRef = useRef<HTMLDivElement>();
-  if (bottomRef.current)
-    bottomRef.current.scrollIntoView({ behavior: "smooth" });
+  const r = () => {
+    if (bottomRef.current)
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+  };
+  setTimeout(r, 10);
   return (
     <div className="events-list">
       {events.map((e, i) => (

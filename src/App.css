@@ -14,9 +14,11 @@ body {
   justify-content: center;
   user-select: none;
 }
+.inline-children > *,
 .sign-out > * {
   display: inline-block;
 }
+.inline-children > * + *,
 .sign-out > a {
   margin-left: 5px;
 }
