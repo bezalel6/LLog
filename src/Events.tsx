@@ -12,6 +12,8 @@ import {
   getDocs,
   orderBy,
   limit,
+  deleteDoc,
+  doc,
 } from "firebase/firestore";
 import { EventLog, PrimitiveEventLog } from "./Event";
 
@@ -36,6 +38,7 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
     // console.log("doc data", doc.data());
 
     const data = doc.data() as PrimitiveEventLog;
+
     if (!data.createdAt) return null;
     // console.log("new data", data);
 
@@ -53,7 +56,9 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
   const events = (_events ? _events.filter((o) => !!o) : []).map((e) => {
     return e;
   });
-
+  const deleteEvent = async (event: EventLog) => {
+    return deleteDoc(doc(db, "events", event.id));
+  };
   // inside Events component
   useEffect(() => {
     // fetch or calculate new logs
@@ -77,7 +82,7 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
         <LineChart events={events}></LineChart>
       )}
       {currentViewStyle === EventViewStyle.List && (
-        <List events={events}></List>
+        <List deleteEvent={deleteEvent} events={events}></List>
       )}
 
       {/* {currentViewStyle === EventViewStyle.BarChart && <Fitness></Fitness>} */}

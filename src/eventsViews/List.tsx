@@ -9,7 +9,12 @@ import firebase from "firebase/app";
 import "firebase/firestore";
 import { Firestore, getFirestore } from "firebase/firestore";
 
-export default function List({ events }: { events: EventLog[] }) {
+type EventDelete = (event: EventLog) => Promise<void>;
+interface ListProps {
+  events: EventLog[];
+  deleteEvent: EventDelete;
+}
+export default function List({ events, deleteEvent }: ListProps) {
   const bottomRef = useRef<HTMLDivElement>();
   const r = () => {
     if (bottomRef.current)
@@ -19,7 +24,7 @@ export default function List({ events }: { events: EventLog[] }) {
   return (
     <div className="events-list">
       {events.map((e, i) => (
-        <Event key={i} event={e}></Event>
+        <Event key={i} deleteEvent={deleteEvent} event={e}></Event>
       ))}
       <div ref={bottomRef}></div>
     </div>
@@ -27,6 +32,7 @@ export default function List({ events }: { events: EventLog[] }) {
 }
 export interface EventProps {
   event: EventLog;
+  deleteEvent: EventDelete;
 }
 
 // const deleteDocument = async (
@@ -43,14 +49,13 @@ export interface EventProps {
 //     console.error(`Error removing document: ${docId}`, error);
 //   }
 // };
-export function Event({ event }: EventProps) {
+export function Event({ event, deleteEvent }: EventProps) {
   const timestamp = event.timestamp;
-  const firebase = useContext(FirebaseContext);
-  firebase.firestore();
+  // firebase.firestore();
   const deleteMe = () => {
     const sure = prompt("are you sure?", "y");
     if (sure == "y") {
-      alert("deleted (not actually tho. implement it already)");
+      deleteEvent(event).then(() => alert("Event deleted"));
     }
   };
   // timestamp
