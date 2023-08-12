@@ -7,7 +7,6 @@ import {
   getRequestHeaders,
   getSleepData,
 } from "./dataRequestManager";
-import { getAccessToken } from "../Backend";
 import { useContext } from "react";
 import { GoogleAuthContext, GoogleAuthType } from "../contexts";
 

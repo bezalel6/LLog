@@ -28,9 +28,14 @@ import {
 
 import axios, { AxiosError } from "axios";
 
-import { alive, getCredentials, logout, signIn } from "./Backend";
+import { AuthenticationData } from "./Auth";
+import Auth from "./Auth";
 import { GitModule } from "@faker-js/faker";
-import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
+import {
+  GoogleOAuthProvider,
+  useGoogleLogin,
+  useGoogleOneTapLogin,
+} from "@react-oauth/google";
 
 const app = firebase.initializeApp({
   apiKey: "AIzaSyBv8K7EfFbjG0Bb_Ji7_bQirZ1LXaK7ylw",
@@ -43,9 +48,11 @@ const app = firebase.initializeApp({
 });
 // axios.defaults.withCredentials = true;
 
-const auth = firebase.auth();
-
 const App: FC = () => {
+  const [connectedToBackend, setConnectedToBackend] = useState<null | boolean>(
+    null
+  );
+  Auth.alive().then(setConnectedToBackend);
   const [user, setUser] = React.useState<firebase.User | null | "initializing">(
     "initializing"
   );
@@ -69,28 +76,37 @@ const App: FC = () => {
   React.useEffect(() => {
     async function au() {
       await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
-      const unsubscribe = auth.onAuthStateChanged((user) => {
+      const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
         setUser(user);
       });
     }
     au();
   }, []);
+  console.log(user);
 
   return (
     <div className="App">
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
-        <GoogleAuthContext.Provider
-          value={{ auth: googleAuth, setAuth: setAuth }}
-        >
-          {user === "initializing" ? (
-            "Initializing..."
-          ) : user ? (
-            <LoggedIn user={user} />
-          ) : (
-            <SignIn />
-          )}
-        </GoogleAuthContext.Provider>
-      </GoogleOAuthProvider>
+      {connectedToBackend ? (
+        <>
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
+            <GoogleAuthContext.Provider
+              value={{ auth: googleAuth, setAuth: setAuth }}
+            >
+              {user === "initializing" ? (
+                "Initializing..."
+              ) : user ? (
+                <LoggedIn user={user} />
+              ) : (
+                <SignIn />
+              )}
+            </GoogleAuthContext.Provider>
+          </GoogleOAuthProvider>
+        </>
+      ) : connectedToBackend === null ? (
+        <h3>Connecting to backend...</h3>
+      ) : (
+        <h3 className="error">Couldnt connect to the backend</h3>
+      )}
       <div className="footer">
         <a href="https://www.freeprivacypolicy.com/live/181543f2-ce03-4f06-8f10-494b6416e31f">
           Privacy Policy
@@ -125,20 +141,20 @@ export const scopes = [
 ];
 const SignIn: FC = () => {
   const setAuth = useContext(GoogleAuthContext).setAuth;
-  type BackendLogin = "loading" | "not logged in" | { accessToken: string };
-  const [backendLoggedIn, setBackendLoggedIn] = useState<BackendLogin>();
-  getCredentials().then((res) => {
-    if (res.error) {
-      setBackendLoggedIn("not logged in");
-    } else {
-      setBackendLoggedIn(res.access_token);
+  type BackendLogin = "loading" | { accessToken: string } | { error: string };
+  const [backendLoggedIn, setBackendLoggedIn] =
+    useState<BackendLogin>("loading");
+  Auth.getCredentials()
+    .then((res) => {
+      setBackendLoggedIn("loading");
       setAuth({ access_token: res.access_token });
-    }
-  });
+    })
+    .catch((reason) => setBackendLoggedIn({ error: reason }));
+
   const googleLogin = useGoogleLogin({
     flow: "auth-code",
     onSuccess: async (codeResponse) => {
-      const tokens = await signIn(codeResponse.code);
+      const tokens = await Auth.signIn(codeResponse.code);
       console.log({ tokens });
       setAuth({ access_token: tokens.access_token });
     },
@@ -149,9 +165,15 @@ const SignIn: FC = () => {
 
   return (
     <div>
-      {backendLoggedIn === "loading" && <h4>Loading...</h4>}
-      {backendLoggedIn === "not logged in" && (
-        <button onClick={googleLogin}>login</button>
+      {backendLoggedIn === "loading" ? (
+        <h4>Loading...</h4>
+      ) : (
+        backendLoggedIn["error"] && (
+          <>
+            <h3>{backendLoggedIn["error"]}</h3>
+            <button onClick={googleLogin}>Login</button>
+          </>
+        )
       )}
     </div>
   );
@@ -196,9 +218,9 @@ export function catchErr(e: any) {
 
 const signOut = async () => {
   // googleLogout();
-  await logout();
+  await Auth.logout();
   await firebase.auth().signOut();
-  location.reload();
+  // location.reload();
 };
 const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
   return (

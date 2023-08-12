@@ -19,32 +19,64 @@ admin.initializeApp();
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
-export const helloWorld = onRequest((request, response) => {
+export const alive = onRequest({ cors: true }, (request, response) => {
   logger.info("Hello logs!", { structuredData: true });
-  response.send("Hello from Firebase!");
-  admin
-    .firestore()
-    .collection("events")
-    .listDocuments()
-    .then((v) => {
-      logger.log(v);
-    });
+  response.send({ alive: true });
+  // admin
+  //   .firestore()
+  //   .collection("events")
+  //   .listDocuments()
+  //   .then((v) => {
+  //     logger.log(v);
+  //   });
 });
 
-const clientId = defineString("CLIENT_ID").value();
-const clientSecret = defineString("CLIENT_SECRET").value();
+const clientId = defineString("CLIENT_ID");
+const clientSecret = defineString("CLIENT_SECRET");
 
-const oAuth2Client = new OAuth2Client(clientId, clientSecret, "postmessage");
+let _oAuth2Client: OAuth2Client = null;
 
-export const getTokens = onRequest(async (request, respose) => {
-  const code = request.query.code as string;
-  const { tokens } = await oAuth2Client.getToken(code); // exchange code for tokens
+const oAuth2Client = () => {
+  if (!_oAuth2Client) {
+    _oAuth2Client = new OAuth2Client(
+      clientId.value(),
+      clientSecret.value(),
+      "postmessage"
+    );
+  }
+  return _oAuth2Client;
+};
+
+export const getTokens = onRequest({ cors: true }, async (request, respose) => {
+  logger.log({ request });
+  const code = request.body.code as string;
+  const { tokens } = await oAuth2Client().getToken(code); // exchange code for tokens
   respose.send(tokens);
 });
-export const refreshToken = onRequest(async (request, response) => {
-  const refreshed = await refresh(request.query.refreshToken as string);
-  response.send(refreshed);
-});
+export const refreshToken = onRequest(
+  { cors: true },
+  async (request, response) => {
+    const token = request.body.refreshToken as string;
+    if (!token) {
+      response.send({
+        error: "a refresh token wasnt provided.",
+      });
+      logger.error(
+        "didnt include refresh token when trying to refresh. got:",
+        request.query,
+        { structuredData: true }
+      );
+    } else {
+      let result;
+      try {
+        result = await refresh(request.body.refreshToken as string);
+      } catch (e) {
+        result = { error: e };
+      }
+      response.send(result);
+    }
+  }
+);
 
 // async function ensureTokenDate(cred: Credentials) {
 //   if (new Date() > new Date(cred.expiry_date!)) {
@@ -54,7 +86,11 @@ export const refreshToken = onRequest(async (request, response) => {
 // }
 async function refresh(refreshToken: string) {
   console.log("refreshing token!!!");
-  const user = new UserRefreshClient(clientId, clientSecret, refreshToken);
+  const user = new UserRefreshClient(
+    clientId.value(),
+    clientSecret.value(),
+    refreshToken
+  );
   const { credentials } = await user.refreshAccessToken(); // obtain new tokens
 
   return credentials;
