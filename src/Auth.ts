@@ -111,12 +111,15 @@ function oauthSignIn(googleId) {
     scope: scopes.join(" "),
     hint: googleId,
     prompt: "", // Specified as an empty string to auto select the account which we have already consented for use.
+    access_type: "offline", // Request a refresh token
+
     callback: (tokenResponse) => {
       const access_token = tokenResponse.access_token;
       console.log(tokenResponse);
       signInPromise.resolve(tokenResponse);
     },
   });
+  console.log(client, google.accounts.oauth2);
   client.requestAccessToken();
 }
 export type AuthenticationData = {
