@@ -72,15 +72,17 @@ const App: FC = () => {
       })
       .catch((e) => console.error("error logging into firebase " + e));
   };
-
+  //tocheck: if the google token expired, theres a chance firebase wouldnt know the persistence is NONE before it calls
+  //firebase.auth().onAuthStateChanged((user) => {...
   React.useEffect(() => {
-    async function au() {
-      await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+    function au() {
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
       const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
         setUser(user);
       });
+      return unsubscribe;
     }
-    au();
+    return au();
   }, []);
   console.log(user);
 
