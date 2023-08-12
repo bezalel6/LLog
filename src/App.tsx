@@ -1,6 +1,6 @@
 /* eslint-disable no-inner-declarations */
 import "./App.css";
-import React, { FC, useContext, useEffect, useRef, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/messaging";
@@ -31,11 +31,8 @@ import axios, { AxiosError } from "axios";
 import { AuthenticationData } from "./Auth";
 import Auth from "./Auth";
 import { GitModule } from "@faker-js/faker";
-import {
-  GoogleOAuthProvider,
-  useGoogleLogin,
-  useGoogleOneTapLogin,
-} from "@react-oauth/google";
+import { GoogleOAuthProvider, useGoogleOneTapLogin } from "@react-oauth/google";
+import { SignIn } from "./SignIn";
 
 const app = firebase.initializeApp({
   apiKey: "AIzaSyBv8K7EfFbjG0Bb_Ji7_bQirZ1LXaK7ylw",
@@ -141,45 +138,6 @@ export const scopes = [
   "https://www.googleapis.com/auth/fitness.sleep.read",
   "https://www.googleapis.com/auth/fitness.sleep.write",
 ];
-const SignIn: FC = () => {
-  const setAuth = useContext(GoogleAuthContext).setAuth;
-  type BackendLogin = "loading" | { accessToken: string } | { error: string };
-  const [backendLoggedIn, setBackendLoggedIn] =
-    useState<BackendLogin>("loading");
-  Auth.getCredentials()
-    .then((res) => {
-      setBackendLoggedIn("loading");
-      setAuth({ access_token: res.access_token });
-    })
-    .catch((reason) => setBackendLoggedIn({ error: reason }));
-
-  const googleLogin = useGoogleLogin({
-    flow: "auth-code",
-    onSuccess: async (codeResponse) => {
-      const tokens = await Auth.signIn(codeResponse.code);
-      console.log({ tokens });
-      setAuth({ access_token: tokens.access_token });
-    },
-    onError(errorResponse) {
-      console.error(errorResponse);
-    },
-  });
-
-  return (
-    <div>
-      {backendLoggedIn === "loading" ? (
-        <h4>Loading...</h4>
-      ) : (
-        backendLoggedIn["error"] && (
-          <>
-            <h3>{backendLoggedIn["error"]}</h3>
-            <button onClick={googleLogin}>Login</button>
-          </>
-        )
-      )}
-    </div>
-  );
-};
 function err(e: any) {
   console.error(e);
 }
