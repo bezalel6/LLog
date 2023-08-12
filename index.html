@@ -7,7 +7,6 @@
   <title>Vite + React + TS</title>
   <link rel="manifest" href="/manifest.json" />
   <!-- <script src="https://apis.google.com/js/api.js"></script> -->
-  <script src="https://accounts.google.com/gsi/client"></script>
   <!-- accounts.google.com/gsi; connect-src accounts.google.com/gsi; /> -->
   <!-- <meta http-equiv="Content-Security-Policy-Report-Only" -->
   <!-- content="script-src accounts.google.com/gsi/client; frame-src accounts.google.com/gsi;" /> -->
@@ -17,8 +16,13 @@
 </head>
 
 <body>
+  <script id="GSI" src="https://accounts.google.com/gsi/client" async defer
+    onload="window.google.isLoaded=true"></script>
+
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+
+
 </body>
 
 </html>

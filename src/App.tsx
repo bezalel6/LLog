@@ -31,7 +31,11 @@ import axios, { AxiosError } from "axios";
 import { AuthenticationData } from "./Auth";
 import Auth from "./Auth";
 import { GitModule } from "@faker-js/faker";
-import { GoogleOAuthProvider, useGoogleOneTapLogin } from "@react-oauth/google";
+import {
+  GoogleOAuthProvider,
+  hasGrantedAllScopesGoogle,
+  useGoogleOneTapLogin,
+} from "@react-oauth/google";
 import { SignIn, SignOut, makeProvider, signOut } from "./SignIn";
 import {
   GoogleAuthProvider,
@@ -86,7 +90,7 @@ const App: FC = () => {
   const [connectedToBackend, setConnectedToBackend] = useState<null | boolean>(
     false
   );
-  timeout(500).then(() => setConnectedToBackend(true));
+  timeout(1000).then(() => setConnectedToBackend(true));
   // Auth.alive().then(setConnectedToBackend);
   const [user, setUser] = React.useState<firebase.User | null | "initializing">(
     "initializing"
@@ -136,7 +140,7 @@ const App: FC = () => {
                 <LoggedIn user={user} />
               ) : (
                 // <SignIn />
-                <MyComponent></MyComponent>
+                <SignIn />
               )}
             </GoogleAuthContext.Provider>
           </GoogleOAuthProvider>
@@ -192,35 +196,6 @@ export function catchErr(e: any) {
     }
   }
 }
-
-const MyComponent: React.FC = () => {
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  // setTimeout(() => {
-  //   setScriptLoaded(true);
-  //   console.log("loadeds");
-  // }, 1000);
-  // useEffect(() => {
-  //   const scripts = document.querySelectorAll("script");
-  //   let script: HTMLScriptElement;
-  //   scripts.forEach((s) => {
-  //     if (s.src === "https://accounts.google.com/gsi/client") script = s;
-  //   });
-  //   // const script =
-  //   console.log(script);
-
-  //   script.onload = () => {
-  //     console.log("loaded");
-  //     setScriptLoaded(true);
-  //   };
-  //   // if(script.)
-  // }, []);
-
-  // if (!scriptLoaded) {
-  //   return <div>Loading...</div>; // You can customize this part
-  // }
-
-  return <SignIn></SignIn>;
-};
 
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);

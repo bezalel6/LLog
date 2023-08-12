@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import moment, { Duration, Moment } from "moment";
 import { catchErr } from "../App";
 const dataValues = [
@@ -38,7 +38,9 @@ export const getRequestHeaders = (accessToken: string) => {
   };
   return requestHeaderBody;
 };
-
+function makeConfig(headers: any): AxiosRequestConfig {
+  return { ...headers };
+}
 export const getAggregatedDataBody = (
   dataType: string,
   startTime: number,
@@ -98,7 +100,7 @@ export const getDataForRange = async (
         .post(
           "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
           body,
-          { ...requestParameters, withCredentials: false }
+          { ...requestParameters, withCredentials: true }
         )
         .then((resp) => {
           for (let idx = 0; idx < differenceInDays; idx++) {
@@ -120,7 +122,7 @@ export const getAggregateData = async (body, headers) => {
   const req = await axios.post(
     "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
     body,
-    { ...headers, withCredentials: false }
+    makeConfig(headers)
   );
   return req;
 };
@@ -137,7 +139,7 @@ const getSleepSessions = async (
       ).toISOString()}&endTime=${new Date(
         endTime
       ).toISOString()}&activityType=72`,
-      { ...headers, withCredentials: false }
+      { ...headers, withCredentials: true }
     )
     .catch((e) => {
       catchErr(e);
@@ -161,7 +163,7 @@ const getSleepSegments = async (sleepSessions, headers): Promise<SleepData> => {
       axios.post(
         "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
         body,
-        { ...headers, withCredentials: false }
+        makeConfig(headers)
       )
     );
   });
