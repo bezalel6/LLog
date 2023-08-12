@@ -79,10 +79,6 @@ const app = firebase.initializeApp({
 // axios.defaults.withCredentials = true;
 
 const App: FC = () => {
-  const [connectedToBackend, setConnectedToBackend] = useState<null | boolean>(
-    null
-  );
-  Auth.alive().then(setConnectedToBackend);
   const [user, setUser] = React.useState<firebase.User | null | "initializing">(
     "initializing"
   );
@@ -118,28 +114,20 @@ const App: FC = () => {
 
   return (
     <div className="App">
-      {connectedToBackend ? (
-        <>
-          <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
-            <GoogleAuthContext.Provider
-              value={{ auth: googleAuth, setAuth: setAuth }}
-            >
-              {user === "initializing" ? (
-                "Initializing..."
-              ) : user ? (
-                <LoggedIn user={user} />
-              ) : (
-                <SignIn />
-                // <MyComponent></MyComponent>
-              )}
-            </GoogleAuthContext.Provider>
-          </GoogleOAuthProvider>
-        </>
-      ) : connectedToBackend === null ? (
-        <h3>Connecting to backend...</h3>
-      ) : (
-        <h3 className="error">Couldnt connect to the backend</h3>
-      )}
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID_T}>
+        <GoogleAuthContext.Provider
+          value={{ auth: googleAuth, setAuth: setAuth }}
+        >
+          {user === "initializing" ? (
+            "Initializing..."
+          ) : user ? (
+            <LoggedIn user={user} />
+          ) : (
+            <SignIn />
+            // <MyComponent></MyComponent>
+          )}
+        </GoogleAuthContext.Provider>
+      </GoogleOAuthProvider>
       <div className="footer">
         <a href="https://www.freeprivacypolicy.com/live/181543f2-ce03-4f06-8f10-494b6416e31f">
           Privacy Policy
