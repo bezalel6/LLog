@@ -232,9 +232,12 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
           </button>
           <SignOut user={user} />
         </div>
-        {showEvents && (
-          <Events currentLogs={eventLogs} setEventLogs={setEventLogs}></Events>
-        )}
+        <Events
+          shown={showEvents}
+          currentLogs={eventLogs}
+          setEventLogs={setEventLogs}
+        ></Events>
+
         <EventCreator eventLogs={eventLogs}></EventCreator>
       </UserContext.Provider>
     </FirebaseContext.Provider>

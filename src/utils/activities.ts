@@ -53,13 +53,11 @@ export async function generateSleepInfo(
   timeRange: TimeRange,
   googleAuth: GoogleAuthType
 ): Promise<Dataset> {
-  console.time("sleep-info");
   // const accessToken = await getAccessToken();
-  const accessToken = googleAuth;
   const sleepData = await getSleepData(
     timeRange.start.getTime(),
     timeRange.end.getTime(),
-    getRequestHeaders(accessToken.access_token)
+    getRequestHeaders(googleAuth.access_token)
   );
   const data = new Map<string, any>();
   let segmentKeys = [];
@@ -84,7 +82,6 @@ export async function generateSleepInfo(
     borderWidth: 2,
   };
   data.get("Sleep").forEach((n) => singleDataset.data.push(n));
-  console.timeEnd("sleep-info");
   return [singleDataset];
 }
 

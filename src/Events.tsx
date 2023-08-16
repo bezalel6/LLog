@@ -25,8 +25,13 @@ import { unstable_usePrompt } from "react-router-dom";
 export interface EventsProps {
   setEventLogs: (eventLogs: EventLog[]) => void;
   currentLogs: EventLog[];
+  shown: boolean;
 }
-export default function Events({ setEventLogs, currentLogs }: EventsProps) {
+export default function Events({
+  shown,
+  setEventLogs,
+  currentLogs,
+}: EventsProps) {
   const firebase = useContext(FirebaseContext)!;
   const user = useContext(UserContext)!;
   const db = getFirestore(firebase);
@@ -72,22 +77,26 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
   }, [events, currentLogs, setEventLogs]);
   const [currentViewStyle, setCurrentViewStyle] = useState(EventViewStyle.List);
   return (
-    <div className="events">
-      <Selection<EventViewStyle>
-        currentValue={currentViewStyle}
-        enumV={EventViewStyle}
-        setValue={setCurrentViewStyle}
-      ></Selection>
+    <>
+      {shown && (
+        <div className="events">
+          <Selection<EventViewStyle>
+            currentValue={currentViewStyle}
+            enumV={EventViewStyle}
+            setValue={setCurrentViewStyle}
+          ></Selection>
 
-      {currentViewStyle === EventViewStyle.LineChart && (
-        <LineChart events={events}></LineChart>
-      )}
-      {currentViewStyle === EventViewStyle.List && (
-        <List deleteEvent={deleteEvent} events={events}></List>
-      )}
+          {currentViewStyle === EventViewStyle.LineChart && (
+            <LineChart events={events}></LineChart>
+          )}
+          {currentViewStyle === EventViewStyle.List && (
+            <List deleteEvent={deleteEvent} events={events}></List>
+          )}
 
-      {/* {currentViewStyle === EventViewStyle.BarChart && <Fitness></Fitness>} */}
-    </div>
+          {/* {currentViewStyle === EventViewStyle.BarChart && <Fitness></Fitness>} */}
+        </div>
+      )}
+    </>
   );
 }
 
