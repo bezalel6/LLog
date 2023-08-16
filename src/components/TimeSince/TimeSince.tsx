@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import moment from "moment";
 
 import PropTypes from "prop-types";
+import { fomratDate } from "../../utils/formatter";
 
 export default class TimeSince extends React.Component<
   { date: Date },
@@ -23,24 +23,7 @@ export default class TimeSince extends React.Component<
     this.state = { stringifiedDate: "" };
   }
   calculateStringifiedDate() {
-    const calculateTime = () => {
-      const date = this.props.date;
-      const duration = moment.duration(moment().diff(moment(date)));
-      const hours = Math.floor(duration.asHours());
-      const minutes = Math.floor(duration.asMinutes()) - hours * 60;
-      if (hours > 12) {
-        return moment(date).fromNow();
-      }
-      if (!hours && !minutes) {
-        return "Now";
-      }
-      if (!minutes) {
-        return `${hours} hours ago`;
-      }
-      if (!hours) return `${minutes} minutes ago`;
-      return `${hours} hours and ${minutes} minutes ago`;
-    };
-    this.setState({ stringifiedDate: calculateTime() });
+    this.setState({ stringifiedDate: fomratDate(this.props.date).desc });
   }
   componentDidMount() {
     this.calculateStringifiedDate();

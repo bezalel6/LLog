@@ -1,6 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import { scopes } from "./App";
+import { fomratDate } from "./utils/formatter";
 const SERVER_PATH = "http://127.0.0.1:5001/llog-9e6bc/us-central1";
 const cookieName = "AUTH";
 
@@ -15,24 +16,69 @@ const Auth = {
         return false;
       });
   },
-
-  async logout() {
+  saveAuth(tokens: AuthenticationData) {
+    Cookies.set(cookieName, JSON.stringify(tokens));
+  },
+  deleteSavedAuth() {
     Cookies.remove(cookieName);
+  },
+  async logout() {
+    Auth.deleteSavedAuth();
     return Promise.resolve();
     // return axios.post(`${SERVER_PATH}/auth/logout`);
   },
   async signIn(code: string): Promise<AuthenticationData> {
     return axios.post(`${SERVER_PATH}/getTokens`, { code }).then((r) => {
-      const ret = r.data;
-      Cookies.set(cookieName, JSON.stringify(ret));
+      const ret = r.data as AuthenticationData;
+      const expiration = fomratDate(ret.expiry_date);
+      console.log(
+        "current token will expire in",
+        expiration.desc,
+        "@",
+        expiration.date
+      );
+      Auth.saveAuth(ret);
       return ret;
     });
   },
   couldntLogIn(str: string = "") {
     return Promise.reject("not logged in " + str);
   },
+  async refresh(tokens: AuthenticationData) {
+    return axios
+      .post(`${SERVER_PATH}/refreshToken`, {
+        refreshToken: tokens.refresh_token,
+      })
+      .then((r) => {
+        const ret = r.data as AuthenticationData;
+        Auth.saveAuth(ret);
+        return ret;
+      });
+  },
   async getCredentials(): Promise<AuthenticationData> {
     try {
+      const cookie = Cookies.get(cookieName);
+      if (cookie) {
+        const parsedTokens = JSON.parse(cookie) as AuthenticationData;
+        let valid = await Auth.isValid(parsedTokens);
+        if (valid === "valid") {
+          return parsedTokens;
+        }
+        if (valid === "invalid") {
+          Auth.deleteSavedAuth();
+        } else if (valid === "expired") {
+          console.log("found expired token. attempting refresh...");
+          const newTokens = await Auth.refresh(parsedTokens);
+          valid = await Auth.isValid(newTokens);
+          if (valid !== "valid") {
+            console.error("couldnt refresh token. new token was", newTokens);
+          } else {
+            console.log("successfully refreshed token");
+            Auth.saveAuth(newTokens);
+            return newTokens;
+          }
+        }
+      }
       return oneTapSignInPrompt().then((c) => {
         return Auth.signIn((c as any).code);
       });
@@ -45,20 +91,26 @@ const Auth = {
     return data.expiry_date < new Date().getTime();
   },
 
-  async isValid(access_token: string) {
+  async isValid(
+    tokens: AuthenticationData
+  ): Promise<"invalid" | "expired" | "valid"> {
     try {
+      if (Auth.isExpired(tokens)) {
+        return "expired";
+      }
       const response = await axios.get(
-        `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${access_token}`
+        `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${tokens.access_token}`
       );
       const ret = !response.data.error_description;
       if (!ret) {
         console.error("access token was not valid:");
         console.error(response.data.error_description);
+        return "invalid";
       }
-      return ret;
+      return "valid";
     } catch (error) {
       console.error(error);
-      return false;
+      return "invalid";
     }
   },
 };

@@ -26,15 +26,15 @@ export const signOut = async () => {
   await Auth.logout();
   if (window.google && window.google.accounts) {
     window.google.accounts.id.disableAutoSelect();
-    window.google.accounts.id.revoke(
-      localStorage.getItem("credential"),
-      function () {
-        console.log("User signed out.");
-      }
-    );
-    await firebase.auth().signOut();
-    // location.reload();
+    // window.google.accounts.id.revoke(
+    //   localStorage.getItem("credential"),
+    //   function () {
+    //     console.log("User signed out.");
+    //   }
+    //   );
   }
+  await firebase.auth().signOut();
+  // location.reload();
 };
 export const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
   return (
@@ -61,7 +61,7 @@ export function SignIn() {
     Auth.getCredentials().then((tokens) => {
       console.log("got credentials:", tokens);
 
-      setAuth({ access_token: tokens.access_token });
+      setAuth(tokens);
     });
   };
   return (
@@ -88,42 +88,5 @@ export function SignIn() {
         data-logo_alignment="left"
       ></div> */}
     </>
-  );
-}
-export function _SignIn() {
-  const setAuth = useContext(GoogleAuthContext).setAuth;
-  // scopes.forEach();
-  const signIn = async () => {
-    const auth = getAuth();
-    auth.useDeviceLanguage();
-
-    const provider = makeProvider();
-    signInWithRedirect(auth, provider);
-    getRedirectResult(auth)
-      .then((result) => {
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential.accessToken;
-        setAuth({ access_token: token });
-        // The signed-in user info.
-        // const user = ;
-        // IdP data available using getAdditionalUserInfo(result)
-        console.log(getAdditionalUserInfo(result));
-      })
-      .catch((error) => {
-        // Handle Errors here.
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // The email of the user's account used.
-        const email = error.customData.email;
-        // The AuthCredential type that was used.
-        const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
-        console.log({ error, errorCode, errorMessage, email, credential });
-      });
-  };
-  return (
-    <div>
-      AnothaSignIn <button onClick={signIn}>Yuh</button>
-    </div>
   );
 }
