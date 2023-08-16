@@ -146,6 +146,7 @@ function handleCredentialResponse(response) {
     // We are passing the signed in email id to oAuth.
     // If we pass an email id to oAuth consent.
     // If the user has already given the oAuth consent. it will get auto selected.
+    console.log("response payload", response);
     oauthSignIn(responsePayload.email);
   }
 }
@@ -166,16 +167,14 @@ function parseJwt(token) {
 let currentClient: Client & any = null;
 function oauthSignIn(googleId) {
   const google = window.google;
+  console.log({ googleId });
   if (currentClient) {
     console.log("used existing client");
   } else {
     currentClient = google.accounts.oauth2.initCodeClient({
       client_id: import.meta.env.VITE_GCP_CLIENT_ID,
       scope: scopes.join(" "),
-      hint: googleId,
-      prompt: "", // Specified as an empty string to auto select the account which we have already consented for use.
-      access_type: "offline", // Request a refresh token
-
+      login_hint: googleId,
       callback: (tokenResponse) => {
         const access_token = tokenResponse.access_token;
         console.log(tokenResponse);

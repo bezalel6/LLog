@@ -36,7 +36,7 @@ import {
   hasGrantedAllScopesGoogle,
   useGoogleOneTapLogin,
 } from "@react-oauth/google";
-import { SignIn, SignOut, makeProvider, signOut } from "./SignIn";
+import { SignOut, makeProvider, signOut } from "./SignIn";
 import {
   GoogleAuthProvider,
   getAdditionalUserInfo,
@@ -87,11 +87,6 @@ function timeout(num: number) {
   });
 }
 const App: FC = () => {
-  const [connectedToBackend, setConnectedToBackend] = useState<null | boolean>(
-    true
-  );
-  // timeout(1000).then(() => setConnectedToBackend(true));
-  // Auth.alive().then(setConnectedToBackend);
   const [user, setUser] = React.useState<firebase.User | null | "initializing">(
     "initializing"
   );
@@ -125,31 +120,36 @@ const App: FC = () => {
     return au();
   }, []);
   console.log({ user });
+  const onClick = () => {
+    Auth.getCredentials().then((tokens) => {
+      console.log("got credentials:", tokens);
 
+      setAuth(tokens);
+    });
+  };
+  useEffect(() => {
+    if (!window.google) {
+      console.log("oopsies no google");
+    }
+    onClick();
+  }, []);
   return (
     <div className="App">
-      {connectedToBackend ? (
-        <>
-          <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID}>
-            <GoogleAuthContext.Provider
-              value={{ auth: googleAuth, setAuth: setAuth }}
-            >
-              {user === "initializing" ? (
-                "Initializing..."
-              ) : user ? (
-                <LoggedIn user={user} />
-              ) : (
-                // <SignIn />
-                <SignIn />
-              )}
-            </GoogleAuthContext.Provider>
-          </GoogleOAuthProvider>
-        </>
-      ) : connectedToBackend === null ? (
-        <h3>Connecting to backend...</h3>
-      ) : (
-        <h3 className="error">Couldnt connect to the backend</h3>
-      )}
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID}>
+        <GoogleAuthContext.Provider
+          value={{ auth: googleAuth, setAuth: setAuth }}
+        >
+          {user === "initializing" ? (
+            "Initializing..."
+          ) : user ? (
+            <LoggedIn user={user} />
+          ) : (
+            // <SignIn />
+            // <SignIn />
+            <></>
+          )}
+        </GoogleAuthContext.Provider>
+      </GoogleOAuthProvider>
       <div className="footer">
         <a href="https://www.freeprivacypolicy.com/live/181543f2-ce03-4f06-8f10-494b6416e31f">
           Privacy Policy
@@ -199,11 +199,10 @@ export function catchErr(e: any) {
 
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
-  const [showEvents, setShowEvents] = useState(false);
+  const [showEvents, setShowEvents] = useState(true);
   useEffect(() => {
     checkEventInParams(GlobalAddEventToDB);
   }, []);
-  const setAuth = useContext(GoogleAuthContext).setAuth;
 
   // const fixME = async () => {
   //   const db = firebase.firestore();
@@ -229,7 +228,7 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
       <UserContext.Provider value={user}>
         <div className="inline-children">
           <button onClick={() => setShowEvents((s) => !s)}>
-            Toggle Events
+            {(showEvents ? "Hide" : "Show") + " "} Events
           </button>
           <SignOut user={user} />
         </div>

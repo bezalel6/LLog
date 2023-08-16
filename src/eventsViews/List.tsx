@@ -18,7 +18,11 @@ export default function List({ events, deleteEvent }: ListProps) {
   const bottomRef = useRef<HTMLDivElement>();
   const r = () => {
     if (bottomRef.current)
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+      bottomRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "start",
+      });
   };
   setTimeout(r, 10);
   return (
