@@ -20,6 +20,7 @@ import { EventLog, PrimitiveEventLog } from "./Event";
 import "./Events.css";
 import List from "./eventsViews/List";
 import LineChart from "./eventsViews/LineChart";
+import { unstable_usePrompt } from "react-router-dom";
 
 export interface EventsProps {
   setEventLogs: (eventLogs: EventLog[]) => void;
@@ -28,21 +29,21 @@ export interface EventsProps {
 export default function Events({ setEventLogs, currentLogs }: EventsProps) {
   const firebase = useContext(FirebaseContext)!;
   const user = useContext(UserContext)!;
-
   const db = getFirestore(firebase);
 
   const q = query(collection(db, "events"), orderBy("createdAt"));
   const [snapshot] = useCollection(q);
 
-  const _events: EventLog[] = snapshot?.docs.map((doc) => {
+  let events: EventLog[] = snapshot?.docs.map((doc) => {
     // console.log("doc data", doc.data());
 
     const data = doc.data() as PrimitiveEventLog;
+    let createdAt;
 
-    if (!data.createdAt) return null;
+    if (!data.createdAt) createdAt = new Date().getTime();
+    else createdAt = (data.createdAt as any).seconds;
     // console.log("new data", data);
 
-    const createdAt = (data.createdAt as any).seconds;
     const e = new EventLog();
     const id = doc.id;
     e.amount = data.amount;
@@ -53,7 +54,7 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
 
     return e;
   });
-  const events = (_events ? _events.filter((o) => !!o) : []).map((e) => {
+  events = (events ? events.filter((o) => !!o) : []).map((e) => {
     return e;
   });
   const deleteEvent = async (event: EventLog) => {
@@ -64,7 +65,7 @@ export default function Events({ setEventLogs, currentLogs }: EventsProps) {
     // fetch or calculate new logs
 
     if (JSON.stringify(currentLogs) !== JSON.stringify(events)) {
-      console.log("got new events", events);
+      // console.log("got new events", events);
 
       setEventLogs(events);
     }

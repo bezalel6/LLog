@@ -88,9 +88,9 @@ function timeout(num: number) {
 }
 const App: FC = () => {
   const [connectedToBackend, setConnectedToBackend] = useState<null | boolean>(
-    false
+    true
   );
-  timeout(1000).then(() => setConnectedToBackend(true));
+  // timeout(1000).then(() => setConnectedToBackend(true));
   // Auth.alive().then(setConnectedToBackend);
   const [user, setUser] = React.useState<firebase.User | null | "initializing">(
     "initializing"
@@ -116,7 +116,7 @@ const App: FC = () => {
   //firebase.auth().onAuthStateChanged((user) => {...
   React.useEffect(() => {
     function au() {
-      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
       const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
         setUser(user);
       });

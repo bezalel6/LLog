@@ -1,4 +1,4 @@
-import React, { FC, useContext, useState } from "react";
+import React, { FC, useContext, useEffect, useState } from "react";
 import { GoogleAuthContext } from "./contexts";
 import Auth from "./Auth";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -22,19 +22,11 @@ export function makeProvider() {
   return provider;
 }
 export const signOut = async () => {
-  // googleLogout();
   await Auth.logout();
   if (window.google && window.google.accounts) {
     window.google.accounts.id.disableAutoSelect();
-    // window.google.accounts.id.revoke(
-    //   localStorage.getItem("credential"),
-    //   function () {
-    //     console.log("User signed out.");
-    //   }
-    //   );
   }
   await firebase.auth().signOut();
-  // location.reload();
 };
 export const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
   return (
@@ -45,9 +37,6 @@ export const SignOut: FC<{ user: firebase.User }> = ({ user }) => {
   );
 };
 
-// export function SignIn() {
-//   return <>ssss</>;
-// }
 export function SignIn() {
   const setAuth = useContext(GoogleAuthContext).setAuth;
   // const onCredentialResponse = (res: any) => {
@@ -64,6 +53,9 @@ export function SignIn() {
       setAuth(tokens);
     });
   };
+  useEffect(() => {
+    onClick();
+  }, []);
   return (
     <>
       <button onClick={onClick}>Login</button>
