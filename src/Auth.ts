@@ -33,7 +33,9 @@ const Auth = {
   },
   async getCredentials(): Promise<AuthenticationData> {
     try {
-      return oneTapSignInPrompt();
+      return oneTapSignInPrompt().then((c) => {
+        return Auth.signIn((c as any).code);
+      });
     } catch (e) {
       return Auth.couldntLogIn(e);
     }
@@ -109,13 +111,13 @@ function parseJwt(token) {
   return JSON.parse(jsonPayload);
 } // This method request the oauth consent for the passed in google account.
 
-let currentClient: Client = null;
+let currentClient: Client & any = null;
 function oauthSignIn(googleId) {
   const google = window.google;
   if (currentClient) {
     console.log("used existing client");
   } else {
-    currentClient = google.accounts.oauth2.initTokenClient({
+    currentClient = google.accounts.oauth2.initCodeClient({
       client_id: import.meta.env.VITE_GCP_CLIENT_ID,
       scope: scopes.join(" "),
       hint: googleId,
@@ -131,8 +133,10 @@ function oauthSignIn(googleId) {
     console.log(currentClient, google.accounts.oauth2);
   }
 
-  currentClient.requestAccessToken();
+  // currentClient.requestAccessToken();
+  currentClient.requestCode();
 }
+
 export type AuthenticationData = {
   access_token: string;
   expiry_date: number;

@@ -58,9 +58,11 @@ export function SignIn() {
   // };
   // window.onCredentialResponse = onCredentialResponse;
   const onClick = () => {
-    Auth.getCredentials().then((tokens) =>
-      setAuth({ access_token: tokens.access_token })
-    );
+    Auth.getCredentials().then((tokens) => {
+      console.log("got credentials:", tokens);
+
+      setAuth({ access_token: tokens.access_token });
+    });
   };
   return (
     <>
