@@ -122,7 +122,9 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       console.error("values not valid");
       return;
     }
-    const q = prompt("do you want to add this to the DB?", "y");
+    let q = "y";
+    if (location.href.includes("localhost"))
+      q = prompt("do you want to add this to the DB?", "y");
     const didApprove = q === "y";
     const laterActions = () => {
       const s = didApprove ? "" : "---DEMO---";

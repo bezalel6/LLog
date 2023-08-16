@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 import { scopes } from "./App";
 const SERVER_PATH = "http://127.0.0.1:5001/llog-9e6bc/us-central1";
 const cookieName = "AUTH";
+
 // const SERVER_PATH = "https://llog-auth-server.onrender.com";
 const Auth = {
   async alive(): Promise<boolean> {
@@ -63,7 +64,9 @@ const signInPromise: {
   resolve?: (tokens: AuthenticationData) => void;
   reject?: (reason?: string) => void;
 } = {};
-
+interface Client {
+  requestAccessToken: () => void;
+}
 function oneTapSignInPrompt() {
   const google = window.google;
   google.accounts.id.initialize({
@@ -72,6 +75,7 @@ function oneTapSignInPrompt() {
     cancel_on_tap_outside: true,
     itp_support: true,
   });
+  console.log({ google });
   google.accounts.id.prompt();
   const promise = new Promise<AuthenticationData>((res, rej) => {
     signInPromise.resolve = res;
@@ -104,23 +108,30 @@ function parseJwt(token) {
   );
   return JSON.parse(jsonPayload);
 } // This method request the oauth consent for the passed in google account.
+
+let currentClient: Client = null;
 function oauthSignIn(googleId) {
   const google = window.google;
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: import.meta.env.VITE_GCP_CLIENT_ID,
-    scope: scopes.join(" "),
-    hint: googleId,
-    prompt: "", // Specified as an empty string to auto select the account which we have already consented for use.
-    access_type: "offline", // Request a refresh token
+  if (currentClient) {
+    console.log("used existing client");
+  } else {
+    currentClient = google.accounts.oauth2.initTokenClient({
+      client_id: import.meta.env.VITE_GCP_CLIENT_ID,
+      scope: scopes.join(" "),
+      hint: googleId,
+      prompt: "", // Specified as an empty string to auto select the account which we have already consented for use.
+      access_type: "offline", // Request a refresh token
 
-    callback: (tokenResponse) => {
-      const access_token = tokenResponse.access_token;
-      console.log(tokenResponse);
-      signInPromise.resolve(tokenResponse);
-    },
-  });
-  console.log(client, google.accounts.oauth2);
-  client.requestAccessToken();
+      callback: (tokenResponse) => {
+        const access_token = tokenResponse.access_token;
+        console.log(tokenResponse);
+        signInPromise.resolve(tokenResponse);
+      },
+    });
+    console.log(currentClient, google.accounts.oauth2);
+  }
+
+  currentClient.requestAccessToken();
 }
 export type AuthenticationData = {
   access_token: string;

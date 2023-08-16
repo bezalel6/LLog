@@ -64,7 +64,7 @@ export function SignIn() {
   };
   return (
     <>
-      <button onClick={onClick}>login</button>
+      <button onClick={onClick}>Login</button>
       {/* <div
         id="g_id_onload"
         data-client_id="240965235389-iv21jhu3th9bbkb6p8hrugrips2pgh5e.apps.googleusercontent.com"
