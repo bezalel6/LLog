@@ -15,21 +15,23 @@ import { defineString } from "firebase-functions/params";
 import * as admin from "firebase-admin";
 
 admin.initializeApp();
-
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
-export const alive = onRequest({ cors: true }, (request, response) => {
-  logger.info("Hello logs!", { structuredData: true });
-  response.send({ alive: true });
-  // admin
-  //   .firestore()
-  //   .collection("events")
-  //   .listDocuments()
-  //   .then((v) => {
-  //     logger.log(v);
-  //   });
-});
+export const alive = onRequest(
+  { cors: true, maxInstances: 10 },
+  (request, response) => {
+    logger.info("Hello logs!", { structuredData: true });
+    response.send({ alive: true });
+    // admin
+    //   .firestore()
+    //   .collection("events")
+    //   .listDocuments()
+    //   .then((v) => {
+    //     logger.log(v);
+    //   });
+  }
+);
 
 const clientId = defineString("CLIENT_ID");
 const clientSecret = defineString("CLIENT_SECRET");
@@ -47,14 +49,18 @@ const oAuth2Client = () => {
   return _oAuth2Client;
 };
 
-export const getTokens = onRequest({ cors: true }, async (request, respose) => {
-  logger.log({ request });
-  const code = request.body.code as string;
-  const { tokens } = await oAuth2Client().getToken(code); // exchange code for tokens
-  respose.send(tokens);
-});
+export const getTokens = onRequest(
+  { cors: true, maxInstances: 10 },
+  async (request, respose) => {
+    logger.log("got tokens request");
+    // logger.log({ request });
+    const code = request.body.code as string;
+    const { tokens } = await oAuth2Client().getToken(code); // exchange code for tokens
+    respose.send(tokens);
+  }
+);
 export const refreshToken = onRequest(
-  { cors: true },
+  { cors: true, maxInstances: 10 },
   async (request, response) => {
     const token = request.body.refreshToken as string;
     if (!token) {

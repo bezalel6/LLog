@@ -1,5 +1,5 @@
 import React, { useContext, useRef } from "react";
-import { EventLog } from "../Event";
+import { EventLog } from "../EventLog";
 import TimeSince from "../components/TimeSince/TimeSince";
 import { formatLabelStr } from "../utils/utils";
 import "./List.css";

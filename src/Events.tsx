@@ -15,7 +15,7 @@ import {
   deleteDoc,
   doc,
 } from "firebase/firestore";
-import { EventLog, PrimitiveEventLog } from "./Event";
+import { EventLog, PrimitiveEventLog } from "./EventLog";
 
 import "./Events.css";
 import List from "./eventsViews/List";

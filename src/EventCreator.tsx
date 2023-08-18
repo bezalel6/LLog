@@ -1,6 +1,6 @@
 import React, { useContext, useRef } from "react";
 import Dropdown from "./components/Dropdown/Dropdown";
-import { EventLog, PrimitiveEventLog } from "./Event";
+import { EventLog, PrimitiveEventLog } from "./EventLog";
 import { formatLabelStr, isNumber } from "./utils/utils";
 import {
   getFirestore,
@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { FirebaseContext, UserContext } from "./contexts";
 import "./EventCreator.css";
+import { isDev } from "./utils/environment";
 export interface EventCreatorProps {
   eventLogs: EventLog[];
 }
@@ -123,8 +124,7 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       return;
     }
     let q = "y";
-    if (location.href.includes("localhost"))
-      q = prompt("do you want to add this to the DB?", "y");
+    if (isDev()) q = prompt("do you want to add this to the DB?", "y");
     const didApprove = q === "y";
     const laterActions = () => {
       const s = didApprove ? "" : "---DEMO---";

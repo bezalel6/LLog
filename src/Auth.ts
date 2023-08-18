@@ -2,14 +2,39 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { scopes } from "./App";
 import { fomratDate } from "./utils/formatter";
-const SERVER_PATH = "http://127.0.0.1:5001/llog-9e6bc/us-central1";
+import { envDependentValue } from "./utils/environment";
+const PLACEHOLDER = "$-><-$";
+class ServerPaths {
+  alive: string;
+  getTokens: string;
+  refreshToken: string;
+  baseUrl: string;
+  makePath(action: string) {
+    const ret = this.baseUrl.replace(PLACEHOLDER, action);
+    console.log("made path:", ret);
+    return ret;
+  }
+}
+const prod = new ServerPaths();
+prod.alive = "alive";
+prod.getTokens = "gettokens";
+prod.refreshToken = "refreshtoken";
+prod.baseUrl = `https://${PLACEHOLDER}-qir3yzujjq-uc.a.run.app`;
+
+const dev = new ServerPaths();
+dev.alive = "alive";
+dev.getTokens = "getTokens";
+dev.refreshToken = "refreshToken";
+dev.baseUrl = `http://127.0.0.1:5001/llog-9e6bc/us-central1/${PLACEHOLDER}`;
+const paths = envDependentValue<ServerPaths>(prod, dev);
+
 const cookieName = "AUTH";
 
 // const SERVER_PATH = "https://llog-auth-server.onrender.com";
 const Auth = {
   async alive(): Promise<boolean> {
     return axios
-      .get(SERVER_PATH + "/alive")
+      .get(paths.makePath(paths.alive))
       .then((data) => !!data.data.alive)
       .catch((e) => {
         console.log("couldnt contact the backend", e);
@@ -28,7 +53,7 @@ const Auth = {
     // return axios.post(`${SERVER_PATH}/auth/logout`);
   },
   async signIn(code: string): Promise<AuthenticationData> {
-    return axios.post(`${SERVER_PATH}/getTokens`, { code }).then((r) => {
+    return axios.post(paths.makePath(paths.getTokens), { code }).then((r) => {
       const ret = r.data as AuthenticationData;
       const expiration = fomratDate(ret.expiry_date);
       console.log(
@@ -46,7 +71,7 @@ const Auth = {
   },
   async refresh(tokens: AuthenticationData) {
     return axios
-      .post(`${SERVER_PATH}/refreshToken`, {
+      .post(paths.makePath(paths.refreshToken), {
         refreshToken: tokens.refresh_token,
       })
       .then((r) => {
@@ -78,6 +103,8 @@ const Auth = {
             return newTokens;
           }
         }
+      } else {
+        console.log("no cookies for you :(");
       }
       return oneTapSignInPrompt().then((c) => {
         return Auth.signIn((c as any).code);
@@ -126,7 +153,7 @@ function oneTapSignInPrompt() {
   google.accounts.id.initialize({
     client_id: import.meta.env.VITE_GCP_CLIENT_ID,
     callback: handleCredentialResponse,
-    cancel_on_tap_outside: true,
+    cancel_on_tap_outside: false,
     itp_support: true,
   });
   console.log({ google });

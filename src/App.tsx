@@ -12,7 +12,7 @@ import {
   UserContext,
 } from "./contexts";
 import Events from "./Events";
-import { EventLog } from "./Event";
+import { EventLog } from "./EventLog";
 import EventCreator, {
   EventPresets,
   GUIEventLog,

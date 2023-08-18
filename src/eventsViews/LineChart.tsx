@@ -1,4 +1,4 @@
-import { EventLog } from "../Event";
+import { EventLog } from "../EventLog";
 import React, { useContext, useEffect, useState } from "react";
 import {
   Chart as ChartJS,
