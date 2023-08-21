@@ -32,7 +32,12 @@ export const alive = onRequest(
     //   });
   }
 );
-
+export const espCon = onRequest(
+  { cors: true, maxInstances: 10 },
+  (req, res) => {
+    res.send("hello");
+  }
+);
 const clientId = defineString("CLIENT_ID");
 const clientSecret = defineString("CLIENT_SECRET");
 

@@ -110,10 +110,17 @@ const App: FC = () => {
   //firebase.auth().onAuthStateChanged((user) => {...
   React.useEffect(() => {
     async function initAuth() {
-      await firebase
-        .auth()
-        .setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      if (!window.google) {
+        console.log("oopsies no google");
+      }
+      const tokens = await Auth.getCredentials();
+      console.log("got credentials:", tokens);
+      setAuth(tokens);
+
       const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+        user.getIdToken(true).then((res) => {
+          console.log("firebase token:", res);
+        });
         setUser(user);
       });
       return unsubscribe;
@@ -128,20 +135,6 @@ const App: FC = () => {
     };
   }, []);
 
-  // console.log({ user });
-  const onClick = () => {
-    Auth.getCredentials().then((tokens) => {
-      console.log("got credentials:", tokens);
-
-      setAuth(tokens);
-    });
-  };
-  useEffect(() => {
-    if (!window.google) {
-      console.log("oopsies no google");
-    }
-    onClick();
-  }, []);
   return (
     <div className="App">
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GCP_CLIENT_ID}>
@@ -222,7 +215,7 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   //       console.log(doc.id, "=>", doc.data());
   //       const data = doc.data() as EventLog;
   //       if(data.created_by){
-          
+
   //         await ref.doc(doc.id).update({
   //           created_by:firebase.firestore.FieldValue.delete()
   //         });

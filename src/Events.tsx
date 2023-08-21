@@ -56,8 +56,9 @@ export default function Events({
     e.event_type = data.event_type;
     e.units = data.units;
     e.id = id;
-
+    e.created_by = data.created_by;
     return e;
+    console.log({ e });
   });
   events = (events ? events.filter((o) => !!o) : []).map((e) => {
     return e;
