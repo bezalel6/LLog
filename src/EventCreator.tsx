@@ -22,6 +22,7 @@ export interface GUIEventLog {
   amount: number;
   unit: string;
   event_type: string;
+  created_by: string;
   // input_type: InputType;
 }
 function convertEventLogToGUI(eventLog: EventLog): GUIEventLog {
@@ -29,7 +30,7 @@ function convertEventLogToGUI(eventLog: EventLog): GUIEventLog {
     amount: eventLog.amount,
     unit: eventLog.units,
     event_type: eventLog.event_type,
-
+    created_by: eventLog.created_by,
     // input_type: "number",
   };
 }
@@ -39,6 +40,7 @@ function convertGUIEventLogToSend(eventLogGUI: GUIEventLog): PrimitiveEventLog {
     units: eventLogGUI.unit,
     event_type: eventLogGUI.event_type,
     createdAt: serverTimestamp(),
+    created_by: eventLogGUI.created_by,
   };
 }
 function validateDoc(doc: any) {
@@ -78,6 +80,7 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       amount: -1,
       unit: "--",
       event_type: "--",
+      created_by: "--",
     };
   }
   onSubmit = async (e: any) => {
@@ -110,11 +113,13 @@ class PRE_CONTEXT_EventCreator extends React.Component<
   //   colle;
   // }
   addEventToDB = async (eventData: GUIEventLog) => {
+    const user = this.props.userContext;
+    if (eventData.created_by === ME_UID_TEMPLATE)
+      eventData.created_by = user.uid;
     console.log("submitting", eventData);
     // const firebase = useContext(FirebaseContext)!;
     // const user = useContext(UserContext)!;
 
-    const user = this.props.userContext;
     const db = getFirestore(this.props.firebaseContext);
 
     const eventsRef = collection(db, "events");
@@ -165,7 +170,12 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       });
     });
     if (!convertedEvents.length) {
-      const k: GUIEventLog = { amount: 0, unit: "", event_type: "" };
+      const k: GUIEventLog = {
+        amount: 0,
+        unit: "",
+        event_type: "",
+        created_by: "",
+      };
       Object.keys(k).forEach((key, i) => {
         addOption(null, key, i);
       });
@@ -196,9 +206,15 @@ class PRE_CONTEXT_EventCreator extends React.Component<
     );
   }
 }
+export const ME_UID_TEMPLATE = "--me--";
 // let _firebase:firebase.app.App;
 export const EventPresets: { [t: string]: GUIEventLog } = {
-  Attent: { amount: 15, event_type: "Attent", unit: "mg" },
+  Attent: {
+    amount: 15,
+    event_type: "Attent",
+    unit: "mg",
+    created_by: ME_UID_TEMPLATE,
+  },
 };
 export default function EventCreator(props: EventCreatorProps) {
   const firebaseC = useContext(FirebaseContext);

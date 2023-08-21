@@ -17,6 +17,7 @@ import EventCreator, {
   EventPresets,
   GUIEventLog,
   GlobalAddEventToDB,
+  ME_UID_TEMPLATE,
 } from "./EventCreator";
 import moment from "moment";
 import {
@@ -181,10 +182,27 @@ const checkEventInParams = (addEventToDB: (e: GUIEventLog) => void) => {
         amount: Number(params.get("amount")),
         event_type: params.get("event_type"),
         unit: params.get("unit"),
+        created_by: ME_UID_TEMPLATE,
       };
     }
     console.log(e);
     addEventToDB(e);
+
+    // Remove the query parameters related to the event
+    params.delete("preset");
+    params.delete("amount");
+    params.delete("event_type");
+    params.delete("unit");
+
+    // Update the URL without reloading the page
+    const newUrl =
+      window.location.protocol +
+      "//" +
+      window.location.host +
+      window.location.pathname +
+      "?" +
+      params.toString();
+    window.history.replaceState({}, "", newUrl);
   }
 };
 export function catchErr(e: any) {

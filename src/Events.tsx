@@ -20,7 +20,6 @@ import { EventLog, PrimitiveEventLog } from "./EventLog";
 import "./Events.css";
 import List from "./eventsViews/List";
 import LineChart from "./eventsViews/LineChart";
-import { unstable_usePrompt } from "react-router-dom";
 
 export interface EventsProps {
   setEventLogs: (eventLogs: EventLog[]) => void;

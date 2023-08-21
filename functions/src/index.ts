@@ -32,10 +32,16 @@ export const alive = onRequest(
     //   });
   }
 );
+
+function formatForESP(r: string) {
+  return "---start---\n" + r;
+}
+
 export const espCon = onRequest(
   { cors: true, maxInstances: 10 },
   (req, res) => {
-    res.send("hello");
+    res.set("Content-Type", "text/plain");
+    res.send(formatForESP("hello"));
   }
 );
 const clientId = defineString("CLIENT_ID");
