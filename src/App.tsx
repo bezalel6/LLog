@@ -213,30 +213,30 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
     checkEventInParams(GlobalAddEventToDB);
   }, []);
 
-  const fixME = async () => {
-    const db = firebase.firestore();
-    const ref = db.collection("events");
-    let fixed = 0;
-    ref.get().then((querySnapshot) => {
-      querySnapshot.forEach(async (doc) => {
-        console.log(doc.id, "=>", doc.data());
-        const data = doc.data() as EventLog;
-
-        if (data.event_type == "mg") {
-          await ref.doc(doc.id).update({
-            event_type: data.units,
-            units: "mg",
-          });
-          console.log(++fixed);
-        }
-      });
-    });
-  };
+  // const fixME = async () => {
+  //   const db = firebase.firestore();
+  //   const ref = db.collection("events");
+  //   let fixed = 0;
+  //   ref.get().then((querySnapshot) => {
+  //     querySnapshot.forEach(async (doc) => {
+  //       console.log(doc.id, "=>", doc.data());
+  //       const data = doc.data() as EventLog;
+  //       if(data.created_by){
+          
+  //         await ref.doc(doc.id).update({
+  //           created_by:firebase.firestore.FieldValue.delete()
+  //         });
+  //         console.log(++fixed);
+  //       }
+  //     });
+  //   });
+  // };
 
   return (
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>
         <div className="inline-children">
+          {/* <button onClick={fixME}>fix me</button> */}
           <button onClick={() => setShowEvents((s) => !s)}>
             {(showEvents ? "Hide" : "Show") + " "} Events
           </button>
