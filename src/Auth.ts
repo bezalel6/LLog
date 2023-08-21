@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 import { scopes } from "./App";
 import { fomratDate } from "./utils/formatter";
 import { envDependentValue } from "./utils/environment";
+import moment from "moment";
 const PLACEHOLDER = "$-><-$";
 class ServerPaths {
   alive: string;
@@ -42,7 +43,7 @@ const Auth = {
       });
   },
   saveAuth(tokens: AuthenticationData) {
-    Cookies.set(cookieName, JSON.stringify(tokens));
+    Cookies.set(cookieName, JSON.stringify(tokens),{expires: moment(new Date()).add(1,'y').toDate()});
   },
   deleteSavedAuth() {
     Cookies.remove(cookieName);

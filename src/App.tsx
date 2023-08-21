@@ -90,7 +90,6 @@ const App: FC = () => {
   const [user, setUser] = React.useState<firebase.User | null | "initializing">(
     "initializing"
   );
-
   const [googleAuth, setGoogleAuth] = React.useState<GoogleAuthType>(null);
   const setAuth = (token: GoogleAuthType) => {
     const credential = firebase.auth.GoogleAuthProvider.credential(
@@ -110,16 +109,26 @@ const App: FC = () => {
   //tocheck: if the google token expired, theres a chance firebase wouldnt know the persistence is NONE before it calls
   //firebase.auth().onAuthStateChanged((user) => {...
   React.useEffect(() => {
-    function au() {
-      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    async function initAuth() {
+      await firebase
+        .auth()
+        .setPersistence(firebase.auth.Auth.Persistence.LOCAL);
       const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
         setUser(user);
       });
       return unsubscribe;
     }
-    return au();
+
+    // Call the async function and handle the unsubscribe
+    const unsubscribe = initAuth();
+
+    // Return a cleanup function that will be called when the component is unmounted
+    return () => {
+      unsubscribe.then((unsub) => unsub());
+    };
   }, []);
-  console.log({ user });
+
+  // console.log({ user });
   const onClick = () => {
     Auth.getCredentials().then((tokens) => {
       console.log("got credentials:", tokens);
@@ -204,24 +213,25 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
     checkEventInParams(GlobalAddEventToDB);
   }, []);
 
-  // const fixME = async () => {
-  //   const db = firebase.firestore();
-  //   const ref = db.collection("events");
-  //   let fixed = 0;
-  //   ref.get().then((querySnapshot) => {
-  //     querySnapshot.forEach(async (doc) => {
-  //       console.log(doc.id, "=>", doc.data());
-  //       const data = doc.data() as EventLog;
-  //       if (data.event_type == "mg") {
-  //         await ref.doc(doc.id).update({
-  //           event_type: data.units,
-  //           units: "mg",
-  //         });
-  //         console.log(++fixed);
-  //       }
-  //     });
-  //   });
-  // };
+  const fixME = async () => {
+    const db = firebase.firestore();
+    const ref = db.collection("events");
+    let fixed = 0;
+    ref.get().then((querySnapshot) => {
+      querySnapshot.forEach(async (doc) => {
+        console.log(doc.id, "=>", doc.data());
+        const data = doc.data() as EventLog;
+
+        if (data.event_type == "mg") {
+          await ref.doc(doc.id).update({
+            event_type: data.units,
+            units: "mg",
+          });
+          console.log(++fixed);
+        }
+      });
+    });
+  };
 
   return (
     <FirebaseContext.Provider value={app}>
