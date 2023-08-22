@@ -1,4 +1,9 @@
-import React, { useContext, useRef } from "react";
+import React, {
+  forwardRef,
+  useContext,
+  useImperativeHandle,
+  useRef,
+} from "react";
 import Dropdown from "./components/Dropdown/Dropdown";
 import { EventLog, PrimitiveEventLog } from "./EventLog";
 import { formatLabelStr, isNumber } from "./utils/utils";
@@ -218,16 +223,40 @@ export const EventPresets: { [t: string]: GUIEventLog } = {
     created_by: ME_UID_TEMPLATE,
   },
 };
-export default function EventCreator(props: EventCreatorProps) {
-  const firebaseC = useContext(FirebaseContext);
-  const userC = useContext(UserContext);
 
-  return (
-    <PRE_CONTEXT_EventCreator
-      {...props}
-      firebaseContext={firebaseC}
-      userContext={userC}
-    ></PRE_CONTEXT_EventCreator>
-  );
-}
+const EventCreator = forwardRef(
+  (props: EventCreatorProps, ref: React.Ref<PRE_CONTEXT_EventCreator>) => {
+    const firebaseC = useContext(FirebaseContext);
+    const userC = useContext(UserContext);
+
+    // // Expose methods or properties to the parent component
+    // useImperativeHandle(ref, () => ({
+    //   addEventToDB
+    // }));
+
+    return (
+      <PRE_CONTEXT_EventCreator
+        ref={ref} // Pass the ref to the child component
+        {...props}
+        firebaseContext={firebaseC}
+        userContext={userC}
+      ></PRE_CONTEXT_EventCreator>
+    );
+  }
+);
+
+export default EventCreator;
+export type EventCreatorClassComponent = PRE_CONTEXT_EventCreator;
+// export default function EventCreator(props: EventCreatorProps) {
+//   const firebaseC = useContext(FirebaseContext);
+//   const userC = useContext(UserContext);
+
+//   return (
+//     <PRE_CONTEXT_EventCreator
+//       {...props}
+//       firebaseContext={firebaseC}
+//       userContext={userC}
+//     ></PRE_CONTEXT_EventCreator>
+//   );
+// }
 export let GlobalAddEventToDB: (e: GUIEventLog) => Promise<void> = null;

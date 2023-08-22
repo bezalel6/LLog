@@ -1,6 +1,13 @@
 /* eslint-disable no-inner-declarations */
 import "./App.css";
-import React, { FC, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  FC,
+  createRef,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/messaging";
@@ -14,6 +21,7 @@ import {
 import Events from "./Events";
 import { EventLog } from "./EventLog";
 import EventCreator, {
+  EventCreatorClassComponent,
   EventPresets,
   GUIEventLog,
   GlobalAddEventToDB,
@@ -46,6 +54,7 @@ import {
   signInWithRedirect,
 } from "firebase/auth";
 import jwtDecode from "jwt-decode";
+import { envDependentValue, isDev } from "./utils/environment";
 
 export const scopes = [
   "https://www.googleapis.com/auth/fitness.activity.read",
@@ -114,17 +123,21 @@ const App: FC = () => {
       if (!window.google) {
         console.log("oopsies no google");
       }
-      const tokens = await Auth.getCredentials();
-      console.log("got credentials:", tokens);
-      setAuth(tokens);
+      try {
+        const tokens = await Auth.getCredentials();
+        console.log("got credentials:", tokens);
+        setAuth(tokens);
 
-      const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-        user.getIdToken(true).then((res) => {
-          console.log("firebase token:", res);
+        const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+          user.getIdToken(true).then((res) => {
+            console.log("firebase token:", res);
+          });
+          setUser(user);
         });
-        setUser(user);
-      });
-      return unsubscribe;
+        return unsubscribe;
+      } catch (e) {
+        catchErr(e);
+      }
     }
 
     // Call the async function and handle the unsubscribe
@@ -186,13 +199,13 @@ const checkEventInParams = (addEventToDB: (e: GUIEventLog) => void) => {
       };
     }
     console.log(e);
-    addEventToDB(e);
 
     // Remove the query parameters related to the event
     params.delete("preset");
     params.delete("amount");
     params.delete("event_type");
     params.delete("unit");
+    console.log(window.location);
 
     // Update the URL without reloading the page
     const newUrl =
@@ -201,16 +214,24 @@ const checkEventInParams = (addEventToDB: (e: GUIEventLog) => void) => {
       window.location.host +
       window.location.pathname;
     window.history.replaceState({}, "", newUrl);
+    setTimeout(() => addEventToDB(e), 1000);
   }
 };
 export function catchErr(e: any) {
   console.error("caught error");
   console.error({ e });
-
-  if (e.name === "AxiosError") {
+  const name = e.name ? e.name : e;
+  if (name.includes("AxiosError")) {
     if (e.status === 401) {
       alert("authentication err. please try authenticating again");
       signOut();
+    } else {
+      alert(
+        envDependentValue(
+          "cant reach the backend",
+          "cant reach the emulator. is it running?"
+        )
+      );
     }
   }
 }
@@ -218,8 +239,9 @@ export function catchErr(e: any) {
 const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
   const [showEvents, setShowEvents] = useState(true);
+  const creatorRef = createRef<EventCreatorClassComponent>();
   useEffect(() => {
-    checkEventInParams(GlobalAddEventToDB);
+    checkEventInParams(creatorRef.current.addEventToDB);
   }, []);
 
   // const fixME = async () => {
@@ -257,7 +279,7 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
           setEventLogs={setEventLogs}
         ></Events>
 
-        <EventCreator eventLogs={eventLogs}></EventCreator>
+        <EventCreator ref={creatorRef} eventLogs={eventLogs}></EventCreator>
       </UserContext.Provider>
     </FirebaseContext.Provider>
   );
