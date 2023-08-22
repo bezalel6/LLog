@@ -199,9 +199,7 @@ const checkEventInParams = (addEventToDB: (e: GUIEventLog) => void) => {
       window.location.protocol +
       "//" +
       window.location.host +
-      window.location.pathname +
-      "?" +
-      params.toString();
+      window.location.pathname;
     window.history.replaceState({}, "", newUrl);
   }
 };
