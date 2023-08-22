@@ -63,6 +63,7 @@ export class EventEmittor {
   }
 }
 //
+
 type EventCreatorState = GUIEventLog;
 class PRE_CONTEXT_EventCreator extends React.Component<
   EventCreatorProps & {
@@ -80,7 +81,7 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       amount: -1,
       unit: "--",
       event_type: "--",
-      created_by: "--",
+      created_by: null,
     };
   }
   onSubmit = async (e: any) => {
@@ -90,6 +91,7 @@ class PRE_CONTEXT_EventCreator extends React.Component<
   makeOnSelectionFunc = (dropdownIndex: number) => {
     return (selected: string, _: number) => {
       // debugger;
+      // todo: make this rely on keys, not indicies
       const k = (i: number) => {
         return Object.keys(this.state)[i];
       };
@@ -114,8 +116,8 @@ class PRE_CONTEXT_EventCreator extends React.Component<
   // }
   addEventToDB = async (eventData: GUIEventLog) => {
     const user = this.props.userContext;
-    if (eventData.created_by === ME_UID_TEMPLATE)
-      eventData.created_by = user.uid;
+    // if (eventData.created_by === ME_UID_TEMPLATE)
+    eventData.created_by = user.uid;
     console.log("submitting", eventData);
     // const firebase = useContext(FirebaseContext)!;
     // const user = useContext(UserContext)!;
