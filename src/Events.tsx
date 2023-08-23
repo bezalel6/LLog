@@ -37,7 +37,7 @@ export default function Events({
   const q = query(
     collection(db, "/events"),
     // where("uid", "==", user.uid),
-    orderBy("createdAt")
+    orderBy("created_at")
   );
   const [snapshot] = useCollection(q);
 

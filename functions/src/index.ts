@@ -40,7 +40,7 @@ export const alive = onRequest(
 );
 
 interface EventLog {
-  createdAt: any;
+  created_at: any;
   amount: number;
   units: string;
   event_type: string;
@@ -54,7 +54,7 @@ interface OpenReqRes {
 function isAllowedToOpen(data: EventLog): OpenReqRes {
   // logger.info("data: ", JSON.stringify(data.createdAt));
   const convertedDate = new Date();
-  const converted = (data.createdAt._seconds as number) * 1000;
+  const converted = (data.created_at._seconds as number) * 1000;
   convertedDate.setTime(converted);
   const passed = moment().diff(convertedDate, "minutes");
   const left = 10 - passed;

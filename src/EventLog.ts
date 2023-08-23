@@ -18,6 +18,8 @@ export class EventLog implements PrimitiveEventLog {
 
   public get timestamp() {
     if (isNaN(Number(this.created_at))) {
+      console.error({ ...this });
+
       return null;
     }
     const ret = new Date();

@@ -110,13 +110,7 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       // console.log("set val", formData[key]);
     };
   };
-  // fixEvents() {
-  //   const user = this.props.userContext;
-  //   const db = getFirestore(this.props.firebaseContext);
 
-  //   const eventsRef = collection(db, "events");
-  //   colle;
-  // }
   addEventToDB = async (eventData: GUIEventLog) => {
     const user = this.props.userContext;
     // if (eventData.created_by === ME_UID_TEMPLATE)
