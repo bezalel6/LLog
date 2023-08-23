@@ -38,7 +38,7 @@ export const alive = onRequest(
 );
 
 interface EventLog {
-  createdAt: number;
+  createdAt: any;
   amount: number;
   units: string;
   event_type: string;
@@ -50,15 +50,19 @@ interface OpenReqRes {
   details?: string;
 }
 function isAllowedToOpen(data: EventLog): OpenReqRes {
+  // logger.info("data: ", JSON.stringify(data.createdAt));
   const convertedDate = new Date();
-  const converted = (this.createdAt as number) * 1000;
-  if (converted < convertedDate.getTime()) convertedDate.setTime(converted);
+  const converted = (data.createdAt._seconds as number) * 1000;
+  convertedDate.setTime(converted);
   const passed = moment().diff(convertedDate, "minutes");
   logger.info("passed:", passed);
-  if (passed < 10) {
+  logger.info("passed string", moment(convertedDate).toNow());
+  const left = 10 - passed;
+  const msg = `not enough time passed. theres ${left} minutes left`;
+  if (left > 0) {
     return {
       allow: false,
-      details: `not enough time passed. theres ${10 - passed} minutes left`,
+      details: msg,
     };
   }
   return { allow: true };
@@ -82,6 +86,7 @@ async function getLastAttent(uid: string): Promise<EventLog> {
         // return snapshot[0].data();
         snapshot.forEach((doc) => {
           const data: EventLog = doc.data() as any;
+          logger.info("got last event:", doc.data());
           res(data);
         });
       });
@@ -97,7 +102,7 @@ async function addToAttent(uid: string, mg: number) {
     uid,
     amount: mg,
     units: "mg",
-    event_type: "Attent",
+    event_type: "Attent-TEST",
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 }
@@ -105,6 +110,7 @@ export const espCon = onRequest(
   { cors: true, maxInstances: 10 },
   async (req, res) => {
     res.set("Content-Type", "application/json");
+
     try {
       logger.info(
         "got body: " + JSON.stringify(req.body) + " request url: " + req.url
