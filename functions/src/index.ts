@@ -11,6 +11,8 @@ import { onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { Credentials, UserRefreshClient } from "google-auth-library";
 import { OAuth2Client } from "google-auth-library";
+import { FieldValue } from "@google-cloud/firestore";
+
 import { defineString } from "firebase-functions/params";
 import * as admin from "firebase-admin";
 import moment = require("moment");
@@ -55,8 +57,6 @@ function isAllowedToOpen(data: EventLog): OpenReqRes {
   const converted = (data.createdAt._seconds as number) * 1000;
   convertedDate.setTime(converted);
   const passed = moment().diff(convertedDate, "minutes");
-  logger.info("passed:", passed);
-  logger.info("passed string", moment(convertedDate).toNow());
   const left = 10 - passed;
   const msg = `not enough time passed. theres ${left} minutes left`;
   if (left > 0) {
@@ -103,7 +103,7 @@ async function addToAttent(uid: string, mg: number) {
     amount: mg,
     units: "mg",
     event_type: "Attent-TEST",
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 }
 export const espCon = onRequest(
@@ -113,12 +113,19 @@ export const espCon = onRequest(
 
     try {
       logger.info(
-        "got body: " + JSON.stringify(req.body) + " request url: " + req.url
+        "got raw body: " +
+          JSON.stringify(req.rawBody) +
+          " request url: " +
+          req.url
       );
       const userId = req.headers["x-user-id"] as string;
       if (!userId) {
         throw "unauthenticated";
       }
+      // if(!req.rawBody){
+      //   throw "didnd get a body"
+      // }
+      logger.log("using provided userId:", userId);
       switch (req.url) {
         case "/request-open": {
           const data = await getLastAttent(userId);
