@@ -13,8 +13,14 @@ import { Credentials, UserRefreshClient } from "google-auth-library";
 import { OAuth2Client } from "google-auth-library";
 import { defineString } from "firebase-functions/params";
 import * as admin from "firebase-admin";
+import { serverTimestamp } from "firebase/firestore";
+import { FieldValue } from "firebase-admin/firestore";
+import moment = require("moment");
 
 admin.initializeApp();
+
+const db = admin.firestore();
+
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
@@ -36,12 +42,87 @@ export const alive = onRequest(
 function formatForESP(r: string) {
   return "---start---\n" + r;
 }
+interface EventLog {
+  createdAt: number;
+  amount: number;
+  units: string;
+  event_type: string;
+  uid: string;
+  id: string;
+}
+interface OpenReqRes {
+  allow: boolean;
+  details?: string;
+}
+function isAllowedToOpen(data: EventLog): OpenReqRes {
+  const passed = moment(data.createdAt).diff(new Date(), "minutes");
+  if (passed < 10) {
+    return {
+      allow: false,
+      details: `not enough time passed. theres ${10 - passed} minutes left`,
+    };
+  }
+  return { allow: true };
+}
 
+async function getLastAttent(uid: string): Promise<EventLog> {
+  const query = db
+    .collection("/events")
+    .where("uid", "==", uid)
+    .where("event_type", "==", "Attent")
+    .orderBy("createdAt", "desc") // Order by the created_at field in descending order
+    .limit(1); // Limit the results to 1 document
+
+  return query.get().then((snapshot) => {
+    if (snapshot.empty) {
+      console.log("No matching documents.");
+      throw "didnt find any documents";
+    }
+    return snapshot[0].data();
+    // snapshot.forEach((doc) => {
+    // const data: EventLog = doc.data() as any;
+    // });
+  });
+}
+async function addToAttent(uid: string, mg: number) {
+  logger.log(`adding ${uid} mg`);
+  return db.collection("events").add({
+    uid,
+    amount: mg,
+    units: "mg",
+    event_type: "Attent",
+    createdAt: serverTimestamp(),
+  });
+}
 export const espCon = onRequest(
   { cors: true, maxInstances: 10 },
-  (req, res) => {
-    res.set("Content-Type", "text/plain");
-    res.send(formatForESP("hello"));
+  async (req, res) => {
+    res.set("Content-Type", "application/json");
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) {
+        throw "unauthenticated";
+      }
+      switch (req.url) {
+        case "/request-open": {
+          const data = await getLastAttent(userId);
+          res.send(isAllowedToOpen(data));
+          break;
+        }
+        case "/notify-opened": {
+          const mg = req.body["mg"] as number;
+          await addToAttent(userId, mg);
+          res.send({ added: true });
+          break;
+        }
+        default: {
+          logger.log("defaulting res for requested url: ", req.url);
+          res.send({});
+        }
+      }
+    } catch (e) {
+      res.send({ error: e });
+    }
   }
 );
 const clientId = defineString("CLIENT_ID");
