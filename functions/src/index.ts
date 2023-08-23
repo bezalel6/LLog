@@ -50,7 +50,10 @@ interface OpenReqRes {
   details?: string;
 }
 function isAllowedToOpen(data: EventLog): OpenReqRes {
-  const passed = moment().diff(data.createdAt, "minutes");
+  const convertedDate = new Date();
+  const converted = (this.createdAt as number) * 1000;
+  if (converted < convertedDate.getTime()) convertedDate.setTime(converted);
+  const passed = moment().diff(convertedDate, "minutes");
   logger.info("passed:", passed);
   if (passed < 10) {
     return {
