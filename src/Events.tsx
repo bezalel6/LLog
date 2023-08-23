@@ -9,9 +9,7 @@ import {
   collection,
   query,
   where,
-  getDocs,
   orderBy,
-  limit,
   deleteDoc,
   doc,
 } from "firebase/firestore";
@@ -34,12 +32,18 @@ export default function Events({
   const firebase = useContext(FirebaseContext)!;
   const user = useContext(UserContext)!;
   const db = getFirestore(firebase);
+  console.log("user id:", user.uid);
 
-  const q = query(collection(db, "events"), orderBy("createdAt"));
+  const q = query(
+    collection(db, "/events"),
+    // where("uid", "==", user.uid),
+    orderBy("createdAt")
+  );
   const [snapshot] = useCollection(q);
 
   let events: EventLog[] = snapshot?.docs.map((doc) => {
     // console.log("doc data", doc.data());
+    // console.log(doc.data());
 
     const data = doc.data() as PrimitiveEventLog;
     let createdAt;
@@ -55,7 +59,7 @@ export default function Events({
     e.event_type = data.event_type;
     e.units = data.units;
     e.id = id;
-    e.created_by = data.created_by;
+    e.uid = data.uid;
     return e;
     console.log({ e });
   });

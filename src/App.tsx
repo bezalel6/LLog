@@ -195,7 +195,6 @@ const checkEventInParams = (addEventToDB: (e: GUIEventLog) => void) => {
         amount: Number(params.get("amount")),
         event_type: params.get("event_type"),
         unit: params.get("unit"),
-        created_by: ME_UID_TEMPLATE,
       };
     }
     console.log(e);
@@ -252,10 +251,9 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
   //     querySnapshot.forEach(async (doc) => {
   //       console.log(doc.id, "=>", doc.data());
   //       const data = doc.data() as EventLog;
-  //       if(data.created_by){
-
+  //       if (data.created_by) {
   //         await ref.doc(doc.id).update({
-  //           created_by:firebase.firestore.FieldValue.delete()
+  //           created_by: null,
   //         });
   //         console.log(++fixed);
   //       }

@@ -27,7 +27,6 @@ export interface GUIEventLog {
   amount: number;
   unit: string;
   event_type: string;
-  created_by: string;
   // input_type: InputType;
 }
 function convertEventLogToGUI(eventLog: EventLog): GUIEventLog {
@@ -35,17 +34,17 @@ function convertEventLogToGUI(eventLog: EventLog): GUIEventLog {
     amount: eventLog.amount,
     unit: eventLog.units,
     event_type: eventLog.event_type,
-    created_by: eventLog.created_by,
     // input_type: "number",
   };
 }
-function convertGUIEventLogToSend(eventLogGUI: GUIEventLog): PrimitiveEventLog {
+function convertGUIEventLogToSend(
+  eventLogGUI: GUIEventLog
+): Omit<PrimitiveEventLog, "uid"> {
   return {
     amount: eventLogGUI.amount,
     units: eventLogGUI.unit,
     event_type: eventLogGUI.event_type,
     createdAt: serverTimestamp(),
-    created_by: eventLogGUI.created_by,
   };
 }
 function validateDoc(doc: any) {
@@ -86,7 +85,6 @@ class PRE_CONTEXT_EventCreator extends React.Component<
       amount: -1,
       unit: "--",
       event_type: "--",
-      created_by: null,
     };
   }
   onSubmit = async (e: any) => {
@@ -122,7 +120,6 @@ class PRE_CONTEXT_EventCreator extends React.Component<
   addEventToDB = async (eventData: GUIEventLog) => {
     const user = this.props.userContext;
     // if (eventData.created_by === ME_UID_TEMPLATE)
-    eventData.created_by = user.uid;
     console.log("submitting", eventData);
     // const firebase = useContext(FirebaseContext)!;
     // const user = useContext(UserContext)!;
@@ -181,7 +178,6 @@ class PRE_CONTEXT_EventCreator extends React.Component<
         amount: 0,
         unit: "",
         event_type: "",
-        created_by: "",
       };
       Object.keys(k).forEach((key, i) => {
         addOption(null, key, i);
@@ -220,7 +216,6 @@ export const EventPresets: { [t: string]: GUIEventLog } = {
     amount: 15,
     event_type: "Attent",
     unit: "mg",
-    created_by: ME_UID_TEMPLATE,
   },
 };
 

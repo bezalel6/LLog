@@ -6,14 +6,14 @@ export interface PrimitiveEventLog {
   amount: number;
   units: string;
   event_type: string;
-  created_by: string;
+  uid: string;
 }
 export class EventLog implements PrimitiveEventLog {
   createdAt: number | FieldValue;
   amount: number;
   units: string;
   event_type: string;
-  created_by: string;
+  uid: string;
   id: string;
 
   public get timestamp() {
