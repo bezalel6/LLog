@@ -2,14 +2,14 @@ import { FieldValue } from "firebase/firestore";
 
 export interface PrimitiveEventLog {
   //in seconds. (epoch obv)
-  createdAt: number | FieldValue;
+  created_at: number | FieldValue;
   amount: number;
   units: string;
   event_type: string;
   uid: string;
 }
 export class EventLog implements PrimitiveEventLog {
-  createdAt: number | FieldValue;
+  created_at: number | FieldValue;
   amount: number;
   units: string;
   event_type: string;
@@ -17,11 +17,11 @@ export class EventLog implements PrimitiveEventLog {
   id: string;
 
   public get timestamp() {
-    if (isNaN(Number(this.createdAt))) {
+    if (isNaN(Number(this.created_at))) {
       return null;
     }
     const ret = new Date();
-    const converted = (this.createdAt as number) * 1000;
+    const converted = (this.created_at as number) * 1000;
     if (converted < ret.getTime()) ret.setTime(converted);
     return ret;
   }

@@ -103,9 +103,38 @@ async function addToAttent(uid: string, mg: number) {
     amount: mg,
     units: "mg",
     event_type: "Attent-TEST",
-    createdAt: FieldValue.serverTimestamp(),
+    created_at: FieldValue.serverTimestamp(),
   });
 }
+export const addAchievement = onRequest(
+  {
+    cors: true,
+    maxInstances: 10,
+  },
+  async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) {
+        throw "unauthenticated";
+      }
+      const [type, data] = req.body;
+      logger.log({ type, data });
+      await admin
+        .firestore()
+        .collection("achievements")
+        .add({
+          uid: userId,
+          type: type ? type : null,
+          data: data ? data : null,
+          created_at: FieldValue.serverTimestamp(),
+        });
+      res.send(200);
+    } catch (e) {
+      logger.error(e);
+      res.send(500);
+    }
+  }
+);
 export const espCon = onRequest(
   { cors: true, maxInstances: 10 },
   async (req, res) => {

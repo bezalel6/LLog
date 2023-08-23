@@ -48,14 +48,14 @@ export default function Events({
     const data = doc.data() as PrimitiveEventLog;
     let createdAt;
 
-    if (!data.createdAt) createdAt = new Date().getTime();
-    else createdAt = (data.createdAt as any).seconds;
+    if (!data.created_at) createdAt = new Date().getTime();
+    else createdAt = (data.created_at as any).seconds;
     // console.log("new data", data);
 
     const e = new EventLog();
     const id = doc.id;
     e.amount = data.amount;
-    e.createdAt = createdAt;
+    e.created_at = createdAt;
     e.event_type = data.event_type;
     e.units = data.units;
     e.id = id;

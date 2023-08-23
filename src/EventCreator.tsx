@@ -44,7 +44,7 @@ function convertGUIEventLogToSend(
     amount: eventLogGUI.amount,
     units: eventLogGUI.unit,
     event_type: eventLogGUI.event_type,
-    createdAt: serverTimestamp(),
+    created_at: serverTimestamp(),
   };
 }
 function validateDoc(doc: any) {
