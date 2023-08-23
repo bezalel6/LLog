@@ -13,8 +13,6 @@ import { Credentials, UserRefreshClient } from "google-auth-library";
 import { OAuth2Client } from "google-auth-library";
 import { defineString } from "firebase-functions/params";
 import * as admin from "firebase-admin";
-import { serverTimestamp } from "firebase/firestore";
-import { FieldValue } from "firebase-admin/firestore";
 import moment = require("moment");
 
 admin.initializeApp();
@@ -39,9 +37,6 @@ export const alive = onRequest(
   }
 );
 
-function formatForESP(r: string) {
-  return "---start---\n" + r;
-}
 interface EventLog {
   createdAt: number;
   amount: number;
@@ -55,7 +50,8 @@ interface OpenReqRes {
   details?: string;
 }
 function isAllowedToOpen(data: EventLog): OpenReqRes {
-  const passed = moment(data.createdAt).diff(new Date(), "minutes");
+  const passed = moment().diff(data.createdAt, "minutes");
+  logger.info("passed:", passed);
   if (passed < 10) {
     return {
       allow: false,
@@ -73,25 +69,33 @@ async function getLastAttent(uid: string): Promise<EventLog> {
     .orderBy("createdAt", "desc") // Order by the created_at field in descending order
     .limit(1); // Limit the results to 1 document
 
-  return query.get().then((snapshot) => {
-    if (snapshot.empty) {
-      console.log("No matching documents.");
-      throw "didnt find any documents";
+  return new Promise((res, rej) => {
+    try {
+      query.get().then((snapshot) => {
+        if (snapshot.empty) {
+          console.log("No matching documents.");
+          throw "didnt find any documents";
+        }
+        // return snapshot[0].data();
+        snapshot.forEach((doc) => {
+          const data: EventLog = doc.data() as any;
+          res(data);
+        });
+      });
+    } catch (e) {
+      rej(e);
     }
-    return snapshot[0].data();
-    // snapshot.forEach((doc) => {
-    // const data: EventLog = doc.data() as any;
-    // });
   });
 }
 async function addToAttent(uid: string, mg: number) {
-  logger.log(`adding ${uid} mg`);
-  return db.collection("events").add({
+  logger.log(`adding ${mg} mg`);
+
+  return admin.firestore().collection("events").add({
     uid,
     amount: mg,
     units: "mg",
     event_type: "Attent",
-    createdAt: serverTimestamp(),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 }
 export const espCon = onRequest(
@@ -99,6 +103,9 @@ export const espCon = onRequest(
   async (req, res) => {
     res.set("Content-Type", "application/json");
     try {
+      logger.info(
+        "got body: " + JSON.stringify(req.body) + " request url: " + req.url
+      );
       const userId = req.headers["x-user-id"] as string;
       if (!userId) {
         throw "unauthenticated";
@@ -110,7 +117,8 @@ export const espCon = onRequest(
           break;
         }
         case "/notify-opened": {
-          const mg = req.body["mg"] as number;
+          const mg = req.body["mg"];
+          // const mg =
           await addToAttent(userId, mg);
           res.send({ added: true });
           break;
@@ -121,6 +129,7 @@ export const espCon = onRequest(
         }
       }
     } catch (e) {
+      logger.error("caught err:", e);
       res.send({ error: e });
     }
   }
