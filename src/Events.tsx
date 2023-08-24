@@ -61,7 +61,6 @@ export default function Events({
     e.id = id;
     e.uid = data.uid;
     return e;
-    console.log({ e });
   });
   events = (events ? events.filter((o) => !!o) : []).map((e) => {
     return e;
