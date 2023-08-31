@@ -156,9 +156,13 @@ const App: FC = () => {
         <GoogleAuthContext.Provider
           value={{ auth: googleAuth, setAuth: setAuth }}
         >
-          {user === "initializing" ? (
-            "Initializing..."
-          ) : user ? (
+          {user === "initializing" && (
+            <>
+              Initializing...
+              <div id="my-btn"></div>
+            </>
+          )}
+          {user !== "initializing" && user ? (
             <LoggedIn user={user} />
           ) : (
             // <SignIn />
@@ -232,6 +236,7 @@ export function catchErr(e: any) {
           "cant reach the emulator. is it running?"
         )
       );
+      location.reload();
     }
   }
 }
@@ -244,33 +249,32 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
     checkEventInParams(creatorRef.current.addEventToDB);
   }, []);
 
-  // const fixME = async () => {
-  //   const db = firebase.firestore();
-  //   const ref = db.collection("events");
-  //   let fixed = 0;
-  //   const toDel = [];
-  //   const querySnapshot = await ref.get();
-  //   querySnapshot.forEach(async (doc) => {
-  //     console.log(doc.id, "=>", doc.data());
+  const fixME = async () => {
+    const db = firebase.firestore();
+    const ref = db.collection("events");
+    let fixed = 0;
+    const toDel = [];
+    const querySnapshot = await ref.get();
+    querySnapshot.forEach(async (doc) => {
+      console.log(doc.id, "=>", doc.data());
 
-  //     const data = doc.data() as any;
-  //     if (!data.created_at || Number.isNaN(data.amount)) {
-  //       toDel.push(doc.ref);
-  //     }
-  //     if (data.createdAt) {
-  //       await ref.doc(doc.id).update({
-  //         created_at: data.createdAt,
-  //         createdAt: null,
-  //       });
-  //       console.log(++fixed);
-  //     }
-  //   });
-
-  //   if (prompt(`delete ${toDel.length} documents?`, "y") === "y")
-  //     toDel.forEach((docId) => {
-  //       deleteDoc(docId);
-  //     });
-  // };
+      const data = doc.data() as any;
+      if (!data.created_at || Number.isNaN(data.amount)) {
+        toDel.push(doc.id);
+      }
+      if (data.createdAt) {
+        await ref.doc(doc.id).update({
+          created_at: data.createdAt,
+          createdAt: null,
+        });
+        console.log(++fixed);
+      }
+    });
+    if (prompt(`delete ${toDel.length} documents?`, "y") === "y")
+      toDel.forEach(async (docId) => {
+        await ref.doc(docId).delete();
+      });
+  };
 
   return (
     <FirebaseContext.Provider value={app}>

@@ -1,3 +1,2 @@
-cd functions 
-npm start
+firebase emulators:start
 pause

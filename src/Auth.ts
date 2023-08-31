@@ -43,7 +43,9 @@ const Auth = {
       });
   },
   saveAuth(tokens: AuthenticationData) {
-    Cookies.set(cookieName, JSON.stringify(tokens),{expires: moment(new Date()).add(1,'y').toDate()});
+    Cookies.set(cookieName, JSON.stringify(tokens), {
+      expires: moment(new Date()).add(1, "y").toDate(),
+    });
   },
   deleteSavedAuth() {
     Cookies.remove(cookieName);
@@ -159,6 +161,12 @@ function oneTapSignInPrompt() {
   });
   console.log({ google });
   google.accounts.id.prompt();
+  const btn = document.getElementById("my-btn");
+  console.log(btn);
+  google.accounts.id.renderButton(btn, {
+    theme: "outline",
+    size: "large",
+  });
   const promise = new Promise<AuthenticationData>((res, rej) => {
     signInPromise.resolve = res;
     signInPromise.reject = rej;
