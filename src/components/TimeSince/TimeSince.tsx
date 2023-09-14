@@ -5,7 +5,7 @@ import { fomratDate } from "../../utils/formatter";
 
 export default class TimeSince extends React.Component<
   { date: Date },
-  { stringifiedDate: string }
+  { stringifiedDate: string; stringifiedExact: string; isHovered: boolean }
 > {
   static allComponents = new Array<TimeSince>();
   static initGlobalTimer() {
@@ -20,16 +20,39 @@ export default class TimeSince extends React.Component<
   constructor(props) {
     super(props);
     TimeSince.allComponents.push(this);
-    this.state = { stringifiedDate: "" };
+    this.state = {
+      stringifiedDate: "",
+      stringifiedExact: "",
+      isHovered: false,
+    };
   }
   calculateStringifiedDate() {
-    this.setState({ stringifiedDate: fomratDate(this.props.date).desc });
+    let f = fomratDate(this.props.date);
+    this.setState({ stringifiedDate: f.desc, stringifiedExact: f.exact });
   }
   componentDidMount() {
     this.calculateStringifiedDate();
   }
+  handleMouseEnter = () => {
+    this.setState({ isHovered: true });
+  };
+  handleMouseLeave = () => {
+    this.setState({ isHovered: false });
+  };
   render() {
-    return <div className="timestamp">{this.state.stringifiedDate}</div>;
+    const displayText = this.state.isHovered
+      ? this.state.stringifiedExact
+      : this.state.stringifiedDate;
+
+    return (
+      <div
+        className="timestamp"
+        onMouseEnter={this.handleMouseEnter}
+        onMouseLeave={this.handleMouseLeave}
+      >
+        {displayText}
+      </div>
+    );
   }
 }
 TimeSince.initGlobalTimer();

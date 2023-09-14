@@ -5,8 +5,14 @@ import moment from "moment";
 export interface DateFormatOutput {
   desc: string;
   date: string;
+  exact: string;
 }
-
+function exact(date: Date) {
+  let diff = moment().diff(date);
+  // execution
+  let f = moment.utc(diff).format("HH:mm:ss");
+  return f;
+}
 export function fomratDate(input: Date | number): DateFormatOutput {
   let date: Date;
 
@@ -18,6 +24,7 @@ export function fomratDate(input: Date | number): DateFormatOutput {
   return {
     desc: moment(date).fromNow(),
     date: dateFunc(date),
+    exact: exact(date),
   };
 }
 const dateFunc = (date: Date) => {
@@ -51,5 +58,6 @@ export function fomratDatePassed(input: Date | number): DateFormatOutput {
   return {
     desc: passedFunc(),
     date: dateFunc(date),
+    exact: "not imp yet",
   };
 }
