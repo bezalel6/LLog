@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 import PropTypes from "prop-types";
 import { fomratDate } from "../../utils/formatter";
+import moment from "moment";
 
 export default class TimeSince extends React.Component<
   { date: Date },
@@ -41,7 +42,7 @@ export default class TimeSince extends React.Component<
   };
   render() {
     const displayText = this.state.isHovered
-      ? this.state.stringifiedExact + this.props.date
+      ? this.state.stringifiedExact + " @ " + moment(this.props.date).toString()
       : this.state.stringifiedDate;
 
     return (
