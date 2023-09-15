@@ -6,6 +6,7 @@ export interface DateFormatOutput {
   desc: string;
   date: string;
   exact: string;
+  dynamicStr: string;
 }
 function exact(date: Date) {
   let diff = moment().diff(date);
@@ -13,6 +14,24 @@ function exact(date: Date) {
   let f = moment.utc(diff).format("HH:mm:ss");
   return f;
 }
+function dynamicDateString(dateToCompare) {
+  const now = moment();
+  const inputDate = moment(dateToCompare);
+
+  // Check if the date is from today
+  if (now.isSame(inputDate, "day")) {
+    return inputDate.format("HH:mm");
+  }
+
+  // Check if the date is from this year
+  if (now.isSame(inputDate, "year")) {
+    return inputDate.format("HH:mm D/M");
+  }
+
+  // If the date is from another year
+  return inputDate.format("HH:mm D/M/Y");
+}
+
 export function fomratDate(input: Date | number): DateFormatOutput {
   let date: Date;
 
@@ -25,6 +44,7 @@ export function fomratDate(input: Date | number): DateFormatOutput {
     desc: moment(date).fromNow(),
     date: dateFunc(date),
     exact: exact(date),
+    dynamicStr: dynamicDateString(date),
   };
 }
 const dateFunc = (date: Date) => {
@@ -59,5 +79,6 @@ export function fomratDatePassed(input: Date | number): DateFormatOutput {
     desc: passedFunc(),
     date: dateFunc(date),
     exact: "not imp yet",
+    dynamicStr: dynamicDateString(date),
   };
 }

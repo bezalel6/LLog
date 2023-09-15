@@ -29,7 +29,10 @@ export default class TimeSince extends React.Component<
   }
   calculateStringifiedDate() {
     let f = fomratDate(this.props.date);
-    this.setState({ stringifiedDate: f.desc, stringifiedExact: f.exact });
+    this.setState({
+      stringifiedDate: f.desc,
+      stringifiedExact: f.exact + " @ " + f.dynamicStr,
+    });
   }
   componentDidMount() {
     this.calculateStringifiedDate();
@@ -42,7 +45,7 @@ export default class TimeSince extends React.Component<
   };
   render() {
     const displayText = this.state.isHovered
-      ? this.state.stringifiedExact + " @ " + moment(this.props.date).toString()
+      ? this.state.stringifiedExact
       : this.state.stringifiedDate;
 
     return (
