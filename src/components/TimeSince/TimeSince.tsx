@@ -41,7 +41,7 @@ export default class TimeSince extends React.Component<
   };
   render() {
     const displayText = this.state.isHovered
-      ? this.state.stringifiedExact
+      ? this.state.stringifiedExact + this.props.date
       : this.state.stringifiedDate;
 
     return (

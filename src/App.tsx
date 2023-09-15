@@ -103,6 +103,7 @@ const App: FC = () => {
   );
   const [googleAuth, setGoogleAuth] = React.useState<GoogleAuthType>(null);
   const setAuth = (token: GoogleAuthType) => {
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const credential = firebase.auth.GoogleAuthProvider.credential(
       null,
       token.access_token
@@ -259,7 +260,11 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
       console.log(doc.id, "=>", doc.data());
 
       const data = doc.data() as any;
-      if (!data.created_at || Number.isNaN(data.amount)) {
+      if (
+        data.id === data.uid ||
+        !data.created_at ||
+        Number.isNaN(data.amount)
+      ) {
         toDel.push(doc.id);
       }
       if (data.createdAt) {
@@ -280,7 +285,7 @@ const LoggedIn: FC<{ user: firebase.User }> = ({ user }) => {
     <FirebaseContext.Provider value={app}>
       <UserContext.Provider value={user}>
         <div className="inline-children">
-          {/* <button onClick={fixME}>fix me</button> */}
+          <button onClick={fixME}>fix me</button>
           <button onClick={() => setShowEvents((s) => !s)}>
             {(showEvents ? "Hide" : "Show") + " "} Events
           </button>
